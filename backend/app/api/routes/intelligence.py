@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections import Counter
-
 from fastapi import APIRouter, HTTPException, Request, status
 
 from app.schemas.intelligence import (
@@ -20,6 +18,12 @@ router = APIRouter(tags=["intelligence"])
     "/project-intelligence",
     response_model=ProjectIntelligenceResponse,
     status_code=status.HTTP_200_OK,
+    summary="Combined delay-risk prediction and historical similarity",
+    description=(
+        "Runs risk prediction (XGBoost + SHAP) and historical similarity search "
+        "(NearestNeighbors) for one project in a single call, reusing PredictionService "
+        "and SimilarityService directly -- no internal HTTP requests."
+    ),
 )
 def project_intelligence(request: Request, payload: ProjectRiskRequest) -> ProjectIntelligenceResponse:
     """Run risk prediction and historical similarity search in a single call.
@@ -74,49 +78,30 @@ def project_intelligence(request: Request, payload: ProjectRiskRequest) -> Proje
 
 
 def _build_similar_projects(similarity_result) -> list[IntelligenceSimilarProject]:  # noqa: ANN001
-    """Transform raw match dicts into the intelligence response shape."""
-    projects = []
-    for match in similarity_result.matches:
-        original = match.original_cost
-        # Compute cost overrun from the raw match data (revised_cost was added to find_matches)
-        revised = getattr(match, "revised_cost", None)
-        if revised is not None and original > 0:
-            cost_overrun = round(((revised - original) / original) * 100, 1)
-        else:
-            cost_overrun = 0.0
-        projects.append(IntelligenceSimilarProject(
+    """Transform rich similarity matches into the slimmer intelligence response shape."""
+    return [
+        IntelligenceSimilarProject(
             project_id=match.project_id,
-            similarity_score=match.similarity_percentage,
+            project_name=match.project_name,
+            similarity_score=match.similarity_score,
             sector=match.sector,
             state=match.state,
             actual_delay_months=match.actual_delay_months,
-            actual_cost_overrun_percentage=cost_overrun,
+            actual_cost_overrun_percentage=match.actual_cost_overrun_percentage,
             primary_delay_cause=match.primary_delay_cause,
-        ))
-    return projects
+        )
+        for match in similarity_result.similar_projects
+    ]
 
 
 def _build_evidence(similarity_result) -> IntelligenceHistoricalEvidence:  # noqa: ANN001
-    """Compute aggregated evidence from the matched historical projects."""
-    matches = similarity_result.matches
-    count = len(matches)
-    if count == 0:
-        return IntelligenceHistoricalEvidence(
-            projects_analyzed=0,
-            significant_delay_percentage=0.0,
-            average_actual_delay_months=0.0,
-            most_common_delay_cause="N/A",
-        )
-    delays = [m.actual_delay_months for m in matches]
-    causes = [m.primary_delay_cause for m in matches]
-    significant = sum(1 for d in delays if d > 6)
-    avg_delay = round(sum(delays) / count, 1)
-    most_common = Counter(causes).most_common(1)[0][0] if causes else "N/A"
+    """Reuse the evidence SimilarityService already computed -- never recompute it here."""
+    evidence = similarity_result.historical_evidence
     return IntelligenceHistoricalEvidence(
-        projects_analyzed=count,
-        significant_delay_percentage=round(significant / count * 100, 1),
-        average_actual_delay_months=avg_delay,
-        most_common_delay_cause=most_common,
+        projects_analyzed=evidence.projects_analyzed,
+        significant_delay_percentage=evidence.significant_delay_percentage,
+        average_actual_delay_months=evidence.average_actual_delay_months,
+        most_common_delay_cause=evidence.most_common_delay_cause,
     )
 
 

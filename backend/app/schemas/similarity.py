@@ -11,24 +11,29 @@ class SimilarityRequest(ProjectRiskRequest):
 
 class HistoricalProjectMatch(BaseModel):
     project_id: str
-    similarity_percentage: float = Field(ge=0, le=100)
+    project_name: str
     sector: str
     state: str
-    original_cost: float
-    revised_cost: float
+    similarity_score: float = Field(ge=0, le=100)
     actual_delay_months: int = Field(ge=0)
-    actual_outcome: str
+    actual_cost_overrun_percentage: float = Field(ge=0)
+    final_status: str
     primary_delay_cause: str
+    intervention_taken: str
+    intervention_outcome: str
+
+
+class HistoricalEvidence(BaseModel):
+    projects_analyzed: int = Field(ge=0)
+    average_similarity: float = Field(ge=0, le=100)
+    average_actual_delay_months: float = Field(ge=0)
+    average_cost_overrun_percentage: float = Field(ge=0)
+    projects_with_significant_delay: int = Field(ge=0)
+    significant_delay_percentage: float = Field(ge=0, le=100)
+    most_common_delay_cause: str
 
 
 class SimilarityResponse(BaseModel):
-    matches: list[HistoricalProjectMatch]
-    evidence: "SimilarityEvidence"
-
-
-class SimilarityEvidence(BaseModel):
-    similar_projects_count: int = Field(ge=0)
-    delayed_projects_count: int = Field(ge=0)
-    delayed_over_six_months_count: int = Field(ge=0)
-    delay_rate: float = Field(ge=0, le=1)
-    summary: str
+    similar_projects: list[HistoricalProjectMatch]
+    historical_evidence: HistoricalEvidence
+    historical_summary: str

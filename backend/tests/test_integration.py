@@ -103,14 +103,15 @@ class TestSmoke:
     def test_similar_projects(self, client: TestClient) -> None:
         r = client.post("/api/v1/similar-projects", json=HIGH_RISK_PROJECT)
         assert r.status_code == 200
-        assert "matches" in r.json()
+        assert "similar_projects" in r.json()
 
     def test_project_intelligence(self, client: TestClient) -> None:
         r = client.post("/api/v1/project-intelligence", json=HIGH_RISK_PROJECT)
         assert r.status_code == 200
         data = r.json()
-        assert "prediction" in data
-        assert "similarity" in data
+        assert "project_risk" in data
+        assert "similar_projects" in data
+        assert "historical_evidence" in data
 
 
 # ===================================================================
@@ -142,29 +143,28 @@ class TestTC1HighRisk:
         assert pct > 60, f"Expected risk >60%, got {pct}%"
 
     def test_similar_projects_returned(self, similarity_result: dict) -> None:
-        assert len(similarity_result["matches"]) > 0
+        assert len(similarity_result["similar_projects"]) > 0
 
     def test_similarity_sorted_descending(self, similarity_result: dict) -> None:
-        sims = [m["similarity_percentage"] for m in similarity_result["matches"]]
+        sims = [m["similarity_score"] for m in similarity_result["similar_projects"]]
         assert sims == sorted(sims, reverse=True), f"Not sorted desc: {sims}"
 
     def test_evidence_calculations_correct(self, similarity_result: dict) -> None:
-        matches = similarity_result["matches"]
-        evidence = similarity_result["evidence"]
-        assert evidence["similar_projects_count"] == len(matches)
-        delayed = sum(1 for m in matches if m["actual_delay_months"] > 0)
-        assert evidence["delayed_projects_count"] == delayed
-        over_six = sum(1 for m in matches if m["actual_delay_months"] > 6)
-        assert evidence["delayed_over_six_months_count"] == over_six
-        expected_rate = round(delayed / len(matches), 4) if matches else 0.0
-        assert evidence["delay_rate"] == expected_rate
+        matches = similarity_result["similar_projects"]
+        evidence = similarity_result["historical_evidence"]
+        assert evidence["projects_analyzed"] == len(matches)
+        significant = sum(1 for m in matches if m["actual_delay_months"] > 6)
+        assert evidence["projects_with_significant_delay"] == significant
+        expected_pct = round(significant / len(matches) * 100, 1) if matches else 0.0
+        assert evidence["significant_delay_percentage"] == expected_pct
+        expected_avg_delay = round(sum(m["actual_delay_months"] for m in matches) / len(matches), 1) if matches else 0.0
+        assert evidence["average_actual_delay_months"] == expected_avg_delay
 
     def test_summary_matches_data(self, similarity_result: dict) -> None:
-        evidence = similarity_result["evidence"]
-        summary = evidence["summary"]
-        assert str(evidence["delayed_projects_count"]) in summary
-        assert str(evidence["similar_projects_count"]) in summary
-        assert str(evidence["delayed_over_six_months_count"]) in summary
+        evidence = similarity_result["historical_evidence"]
+        summary = similarity_result["historical_summary"]
+        assert str(evidence["projects_analyzed"]) in summary
+        assert str(evidence["projects_with_significant_delay"]) in summary
 
 
 # ===================================================================
@@ -201,16 +201,17 @@ class TestTC2LowRisk:
     def test_different_similar_projects(self, low_similarity: dict, client: TestClient) -> None:
         high_r = client.post("/api/v1/similar-projects", json=HIGH_RISK_PROJECT)
         high_sim = high_r.json()
-        low_ids = {m["project_id"] for m in low_similarity["matches"]}
-        high_ids = {m["project_id"] for m in high_sim["matches"]}
+        low_ids = {m["project_id"] for m in low_similarity["similar_projects"]}
+        high_ids = {m["project_id"] for m in high_sim["similar_projects"]}
         # At minimum they should not be exactly the same set
         assert low_ids != high_ids or len(low_ids) == 0, "Low and high risk matched identical projects"
 
     def test_evidence_generated(self, low_similarity: dict) -> None:
-        ev = low_similarity["evidence"]
-        assert ev["similar_projects_count"] > 0
-        assert isinstance(ev["summary"], str)
-        assert len(ev["summary"]) > 10
+        ev = low_similarity["historical_evidence"]
+        assert ev["projects_analyzed"] > 0
+        summary = low_similarity["historical_summary"]
+        assert isinstance(summary, str)
+        assert len(summary) > 10
 
 
 # ===================================================================
@@ -231,16 +232,16 @@ class TestTC3MilestoneSensitivity:
         return out
 
     def test_risk_increases_with_milestones(self, results: dict[int, dict]) -> None:
-        pcts = {n: results[n]["prediction"]["project_risk"]["risk_percentage"] for n in (0, 5, 10)}
+        pcts = {n: results[n]["project_risk"]["risk_percentage"] for n in (0, 5, 10)}
         assert pcts[0] <= pcts[5] <= pcts[10], f"Risk should increase: {pcts}"
 
     def test_similarity_results_change(self, results: dict[int, dict]) -> None:
-        ids_0 = [m["project_id"] for m in results[0]["similarity"]["matches"]]
-        ids_10 = [m["project_id"] for m in results[10]["similarity"]["matches"]]
+        ids_0 = [m["project_id"] for m in results[0]["similar_projects"]]
+        ids_10 = [m["project_id"] for m in results[10]["similar_projects"]]
         # With such different milestone profiles, at least one match should differ
-        # (or at minimum the similarity percentages should differ)
-        sims_0 = [m["similarity_percentage"] for m in results[0]["similarity"]["matches"]]
-        sims_10 = [m["similarity_percentage"] for m in results[10]["similarity"]["matches"]]
+        # (or at minimum the similarity scores should differ)
+        sims_0 = [m["similarity_score"] for m in results[0]["similar_projects"]]
+        sims_10 = [m["similarity_score"] for m in results[10]["similar_projects"]]
         assert ids_0 != ids_10 or sims_0 != sims_10, (
             "Similarity results should change when milestones_delayed goes from 0 to 10"
         )
@@ -284,16 +285,16 @@ class TestTC4IdenticalHistorical:
         return r.json()
 
     def test_top_match_very_high_similarity(self, similarity_result: dict) -> None:
-        top = similarity_result["matches"][0]
-        assert top["similarity_percentage"] >= 80, (
-            f"Expected top match >= 80% similarity for identical input, got {top['similarity_percentage']}%"
+        top = similarity_result["similar_projects"][0]
+        assert top["similarity_score"] >= 80, (
+            f"Expected top match >= 80% similarity for identical input, got {top['similarity_score']}%"
         )
 
     def test_self_or_near_identical_in_results(self, similarity_result: dict, historical_row: pd.Series) -> None:
         # The exact project or one with the same sector/state should appear
         project_id = str(historical_row["project_id"])
-        match_ids = [m["project_id"] for m in similarity_result["matches"]]
-        match_sectors = [m["sector"] for m in similarity_result["matches"]]
+        match_ids = [m["project_id"] for m in similarity_result["similar_projects"]]
+        match_sectors = [m["sector"] for m in similarity_result["similar_projects"]]
         # Either the exact project is in the top matches, or the top match shares sector
         assert project_id in match_ids or historical_row["sector"] in match_sectors
 
@@ -329,6 +330,22 @@ class TestTC5InvalidInput:
     def test_invalid_on_similarity_endpoint(self, client: TestClient) -> None:
         payload = {**LOW_RISK_PROJECT, "physical_progress": 150}
         r = client.post("/api/v1/similar-projects", json=payload)
+        assert r.status_code == 422
+
+    def test_top_k_above_maximum_rejected(self, client: TestClient) -> None:
+        r = client.post("/api/v1/similar-projects?top_k=50", json=LOW_RISK_PROJECT)
+        assert r.status_code == 422
+
+    def test_top_k_zero_rejected(self, client: TestClient) -> None:
+        r = client.post("/api/v1/similar-projects?top_k=0", json=LOW_RISK_PROJECT)
+        assert r.status_code == 422
+
+    def test_top_k_negative_rejected(self, client: TestClient) -> None:
+        r = client.post("/api/v1/similar-projects?top_k=-3", json=LOW_RISK_PROJECT)
+        assert r.status_code == 422
+
+    def test_top_k_non_integer_rejected(self, client: TestClient) -> None:
+        r = client.post("/api/v1/similar-projects?top_k=abc", json=LOW_RISK_PROJECT)
         assert r.status_code == 422
 
     def test_invalid_on_intelligence_endpoint(self, client: TestClient) -> None:

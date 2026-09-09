@@ -54,30 +54,36 @@ export async function predictProjectRisk(input: ProjectRiskInput): Promise<Proje
 
 export type HistoricalProjectMatch = {
   project_id: string;
-  similarity_percentage: number;
+  project_name: string;
   sector: string;
   state: string;
-  original_cost: number;
+  similarity_score: number;
   actual_delay_months: number;
-  actual_outcome: string;
+  actual_cost_overrun_percentage: number;
+  final_status: string;
   primary_delay_cause: string;
+  intervention_taken: string;
+  intervention_outcome: string;
 };
 
-export type SimilarityEvidence = {
-  similar_projects_count: number;
-  delayed_projects_count: number;
-  delayed_over_six_months_count: number;
-  delay_rate: number;
-  summary: string;
+export type HistoricalEvidence = {
+  projects_analyzed: number;
+  average_similarity: number;
+  average_actual_delay_months: number;
+  average_cost_overrun_percentage: number;
+  projects_with_significant_delay: number;
+  significant_delay_percentage: number;
+  most_common_delay_cause: string;
 };
 
 export type SimilarityResponse = {
-  matches: HistoricalProjectMatch[];
-  evidence: SimilarityEvidence;
+  similar_projects: HistoricalProjectMatch[];
+  historical_evidence: HistoricalEvidence;
+  historical_summary: string;
 };
 
-export async function findSimilarProjects(input: ProjectRiskInput): Promise<SimilarityResponse> {
-  const response = await fetch(`${API_URL}/api/v1/similar-projects`, {
+export async function findSimilarProjects(input: ProjectRiskInput, topK = 5): Promise<SimilarityResponse> {
+  const response = await fetch(`${API_URL}/api/v1/similar-projects?top_k=${topK}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
