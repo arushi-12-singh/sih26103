@@ -39,6 +39,6 @@ def main() -> None:
     data.to_csv(OUTPUT_PATH, index=False)
     print(f"Generated {len(data):,} historical projects at {OUTPUT_PATH}")
 
-
+q
 if __name__ == "__main__":
     main()
