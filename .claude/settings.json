@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/generate_historical_projects.py)",
+      "Bash(python3 -c \"import numpy, pandas, sklearn, fastapi, joblib\")"
+    ]
+  }
+}

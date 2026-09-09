@@ -9,6 +9,7 @@ class IntelligenceSimilarProject(BaseModel):
     """A single historical project match in the intelligence response."""
 
     project_id: str
+    project_name: str
     similarity_score: float = Field(ge=0, le=100)
     sector: str
     state: str
