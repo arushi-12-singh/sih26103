@@ -208,8 +208,9 @@ export default function DocumentUploadModal({
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length > 0) {
-      addFilesToQueue(e.target.files);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      addFilesToQueue(files);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };

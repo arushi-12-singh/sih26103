@@ -17,14 +17,27 @@ export default function Home() {
   const [active, setActive] = useState("Overview"); const [showSearch, setShowSearch] = useState(false); const [notice, setNotice] = useState(false); const [landStatus, setLandStatus] = useState(34); const [funding, setFunding] = useState(72); const [milestones, setMilestones] = useState(3); const [resources, setResources] = useState(50); const [prediction, setPrediction] = useState<ProjectRiskResponse | null>(null); const [predictionError, setPredictionError] = useState<string | null>(null); const [isPredicting, setIsPredicting] = useState(false); const [similarity, setSimilarity] = useState<SimilarityResponse | null>(null);
   const [showDocModal, setShowDocModal] = useState(false);
   const [docCount, setDocCount] = useState<number>(0);
+  const [projectId, setProjectId] = useState("EFC-04");
+  const [isProjectResolved, setIsProjectResolved] = useState(false);
 
   const projectInput: ProjectRiskInput = { sector: "Railways", state: "Uttar Pradesh", original_cost: 5000, revised_cost: 5400, planned_duration_months: 48, project_age_months: 36, physical_progress: 52, financial_progress: 41, milestones_total: 20, milestones_delayed: 6, land_acquisition_pending: true, clearance_pending: false, funding_issue: true, contractor_issue: false, previous_schedule_deviation: 5 };
   
   useEffect(() => {
-    fetchProjectDocuments("EFC-04")
+    const projectPathSegment = window.location.pathname.split("/")[2];
+    if (projectPathSegment) {
+      // The browser pathname is the source of truth for project-scoped uploads.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setProjectId(projectPathSegment);
+    }
+    setIsProjectResolved(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isProjectResolved) return;
+    fetchProjectDocuments(projectId)
       .then((res) => setDocCount(res.total_count))
       .catch(() => {});
-  }, []);
+  }, [isProjectResolved, projectId]);
 
   const runPrediction = async () => { setIsPredicting(true); setPredictionError(null); try { const [pred, sim] = await Promise.all([predictProjectRisk(projectInput), findSimilarProjects(projectInput)]); setPrediction(pred); setSimilarity(sim); } catch (error) { setPredictionError(error instanceof Error ? error.message : "Unable to reach prediction service"); } finally { setIsPredicting(false); } };
   const risk = prediction?.project_risk;
@@ -32,7 +45,7 @@ export default function Home() {
   const scenarioRisk = Math.max(48, Math.round(96 - (landStatus - 34) * .45 - (funding - 72) * .15 - (3 - milestones) * 5 - (resources - 50) * .12)); const scenarioDelay = Math.max(4, Math.round(10 - (landStatus - 34) * .035 - (funding - 72) * .008 - (3 - milestones) * .8 - (resources - 50) * .02)); const scenarioCost = Math.max(180, Math.round(420 - (96 - scenarioRisk) * 5.6));
   return <div className="app-shell"><Sidebar active={active} setActive={setActive} /><main className="main-content"><header className="topbar"><div className="mobile-brand"><Menu size={20} /><strong>PAIMANA</strong></div><div className="breadcrumb"><button className="back-link"><ArrowLeft size={13} /> Portfolio</button> / <strong>{active.toUpperCase()}</strong></div><div className="top-actions"><button className="icon-button search-trigger" onClick={() => setShowSearch(!showSearch)}><Search size={18} /><span>Search projects</span><kbd>Cmd K</kbd></button><button className="period"><CalendarDays size={16} /> Q3 FY 2026 <ChevronDown size={14} /></button><button className="icon-only" onClick={() => setNotice(!notice)} aria-label="Notifications"><Bell size={18} />{notice && <span className="notification-pop">3 new signals</span>}</button><div className="avatar">AS</div></div></header>{showSearch && <div className="search-panel"><Search size={17} /><input autoFocus placeholder="Search projects, regions, signals..." /><button onClick={() => setShowSearch(false)}><X size={16} /></button></div>}
       {active === "Geospatial view" ? <GISCollisionChecker /> : (
-      <div className="detail-wrap"><header className="project-header"><div><div className="eyebrow"><span className="live-dot" /> AI MONITORING ACTIVE</div><h1>Eastern Freight Corridor Expansion</h1><p>Railways <span>•</span> Northern Region <span>•</span> Project ID: EFC-04</p></div><div className="project-header-actions"><span className="updated"><span className="green-dot" /> Updated 12 min ago</span><button className="predict-button" onClick={runPrediction} disabled={isPredicting}><Activity size={15} /> {isPredicting ? "Analyzing..." : "Run AI analysis"}</button><button className="upload-button" onClick={() => setShowDocModal(true)} title="Upload Project Documents" aria-label="Upload Project Documents"><FileUp size={15} /> Upload document {docCount > 0 && <span className="doc-badge">{docCount}</span>}</button><button className="export-button"><FileOutput size={15} /> Export brief</button></div></header>
+      <div className="detail-wrap"><header className="project-header"><div><div className="eyebrow"><span className="live-dot" /> AI MONITORING ACTIVE</div><h1>Eastern Freight Corridor Expansion</h1><p>Railways <span>•</span> Northern Region <span>•</span> Project ID: {projectId}</p></div><div className="project-header-actions"><span className="updated"><span className="green-dot" /> Updated 12 min ago</span><button className="predict-button" onClick={runPrediction} disabled={isPredicting}><Activity size={15} /> {isPredicting ? "Analyzing..." : "Run AI analysis"}</button><button className="upload-button" onClick={() => setShowDocModal(true)} title="Upload Project Documents" aria-label="Upload Project Documents"><FileUp size={15} /> Upload document {docCount > 0 && <span className="doc-badge">{docCount}</span>}</button><button className="export-button"><FileOutput size={15} /> Export brief</button></div></header>
         {predictionError && <div className="prediction-error" role="alert"><AlertTriangle size={15} /> {predictionError} <button onClick={runPrediction}>Retry</button></div>}
         {!prediction && !predictionError && <div className="prediction-hint"><Sparkles size={14} /> Live model output will appear here. Run AI analysis to score this project.</div>}
         <section className="executive-summary"><div className="summary-name"><span>PROJECT STATUS</span><RiskPill>{risk?.risk_level ?? "NOT ANALYZED"}</RiskPill><small>{prediction ? "Model result generated just now" : "Awaiting model analysis"}</small></div><div className="summary-stat score"><span>AI RISK SCORE</span><strong>{risk?.risk_percentage ?? "--"} <small>/ 100</small></strong><div className="score-line"><i style={{ width: `${risk?.risk_percentage ?? 0}%` }} /></div></div><div className="summary-stat"><span>PREDICTED DELAY</span><strong>{risk ? (risk.risk_percentage > 80 ? "8-11" : risk.risk_percentage > 60 ? "5-8" : "2-4") : "--"} <small>months</small></strong><small>Model estimate</small></div><div className="summary-stat cost"><span>POTENTIAL COST IMPACT</span><strong>{risk ? `Rs ${Math.max(120, Math.round(risk.risk_percentage * 4.35))}` : "--"} <small>Cr</small></strong><small>Model estimate</small></div><div className="summary-confidence"><span>MODEL CONFIDENCE</span><strong>{risk?.model_confidence ?? "--"}</strong><small><Check size={12} /> {risk?.confidence_basis ?? "Run analysis to validate"}</small></div></section>
@@ -46,7 +59,7 @@ export default function Home() {
         <DocumentUploadModal
           isOpen={showDocModal}
           onClose={() => setShowDocModal(false)}
-          projectId="EFC-04"
+          projectId={projectId}
           projectName="Eastern Freight Corridor Expansion"
           onDocumentCountChange={(count) => setDocCount(count)}
         />

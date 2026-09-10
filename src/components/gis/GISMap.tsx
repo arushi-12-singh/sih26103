@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { MapContainer, TileLayer, Circle, Marker, Popup, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import type { Feature, Geometry } from "geojson";
+import type { GISFeatureProperties, GISGeoJSON } from "@/lib/prediction-api";
 
 // Fix default Leaflet icon paths in Next.js
 const defaultIcon = L.icon({
@@ -28,7 +30,7 @@ function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
 type GISMapProps = {
   center: { lat: number; lng: number };
   bufferDistanceKm: number;
-  geojsonLayers?: any;
+  geojsonLayers?: GISGeoJSON;
   hasCollision?: boolean;
 };
 
@@ -36,7 +38,7 @@ export default function GISMap({ center, bufferDistanceKm, geojsonLayers, hasCol
   const position: [number, number] = [center.lat, center.lng];
   const bufferRadiusMeters = bufferDistanceKm * 1000;
 
-  const getStyleForFeature = (feature: any) => {
+  const getStyleForFeature = (feature?: Feature<Geometry, GISFeatureProperties>) => {
     const sev = feature?.properties?.collision_severity;
     const cat = feature?.properties?.category;
 
@@ -65,7 +67,7 @@ export default function GISMap({ center, bufferDistanceKm, geojsonLayers, hasCol
     }
   };
 
-  const onEachFeature = (feature: any, layer: L.Layer) => {
+  const onEachFeature = (feature: Feature<Geometry, GISFeatureProperties>, layer: L.Layer) => {
     const props = feature?.properties || {};
     if (props.name) {
       const content = `

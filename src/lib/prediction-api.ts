@@ -126,9 +126,20 @@ export type GISCollisionResponse = {
   buffer_distance_km: number;
   project_coordinates: { latitude: number; longitude: number };
   collisions: ZoneCollision[];
-  geojson_layers: any;
+  geojson_layers: GISGeoJSON;
   summary: string;
 };
+
+export type GISFeatureProperties = {
+  name?: string;
+  category?: string;
+  state?: string;
+  collision_severity?: string;
+  clearance_type_required?: string;
+  [key: string]: unknown;
+};
+
+export type GISGeoJSON = FeatureCollection<Geometry, GISFeatureProperties>;
 
 export async function checkGisCollision(input: GISBufferInput): Promise<GISCollisionResponse> {
   const response = await fetch(`${API_URL}/api/v1/gis/check-collision`, {
@@ -143,7 +154,7 @@ export async function checkGisCollision(input: GISBufferInput): Promise<GISColli
   return response.json() as Promise<GISCollisionResponse>;
 }
 
-export async function fetchProtectedZones(categories?: string[]): Promise<any> {
+export async function fetchProtectedZones(categories?: string[]): Promise<GISGeoJSON> {
   const params = categories?.length ? `?${categories.map(c => `category=${encodeURIComponent(c)}`).join("&")}` : "";
   const response = await fetch(`${API_URL}/api/v1/gis/protected-zones${params}`);
   if (!response.ok) {
@@ -243,3 +254,4 @@ export async function deleteProjectDocument(projectId: string, documentId: strin
 export function getDocumentDownloadUrl(projectId: string, documentId: string): string {
   return `${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}/download`;
 }
+import type { FeatureCollection, Geometry } from "geojson";
