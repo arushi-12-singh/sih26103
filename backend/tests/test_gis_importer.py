@@ -39,7 +39,7 @@ def test_geometry_validation_and_repair() -> None:
 
 def test_geometry_validation_rejects_point() -> None:
     point = sg.Point(77.0, 28.0)
-    with pytest.raises(ValueError, match="Only Polygon and MultiPolygon are supported"):
+    with pytest.raises(ValueError, match="Only Polygon and MultiPolygon are allowed"):
         validate_and_repair_geometry(sg.mapping(point))
 
 

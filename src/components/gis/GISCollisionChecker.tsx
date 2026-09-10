@@ -57,7 +57,9 @@ export default function GISCollisionChecker() {
   };
 
   useEffect(() => {
-    runCollisionCheck();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void runCollisionCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lng, bufferKm, selectedCategories]);
 
   const handlePresetSelect = (presetId: string) => {

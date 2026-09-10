@@ -151,3 +151,95 @@ export async function fetchProtectedZones(categories?: string[]): Promise<any> {
   }
   return response.json();
 }
+
+// --- Project Document Management API ---
+
+export type DocumentCategory =
+  | "Detailed Project Report (DPR)"
+  | "Environmental Clearance"
+  | "Land Acquisition Record"
+  | "Financial & Expenditure Report"
+  | "Site Survey & Geotechnical"
+  | "Contract & Tender Agreement"
+  | "Other / Supporting Document";
+
+export type DocumentMetadata = {
+  document_id: string;
+  project_id: string;
+  filename: string;
+  original_filename: string;
+  category: DocumentCategory;
+  description: string | null;
+  file_size_bytes: number;
+  mime_type: string;
+  uploaded_at: string;
+  uploader: string;
+};
+
+export type DocumentUploadResponse = {
+  success: boolean;
+  message: string;
+  document: DocumentMetadata;
+};
+
+export type DocumentListResponse = {
+  project_id: string;
+  total_count: number;
+  total_size_bytes: number;
+  documents: DocumentMetadata[];
+};
+
+export async function uploadProjectDocument(
+  projectId: string,
+  file: File,
+  category: DocumentCategory = "Other / Supporting Document",
+  description?: string,
+  uploader = "Ananya Sharma"
+): Promise<DocumentUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("category", category);
+  if (description) formData.append("description", description);
+  if (uploader) formData.append("uploader", uploader);
+
+  const response = await fetch(`${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/documents`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail?.[0]?.msg ?? error?.detail ?? `Document upload failed (${response.status})`);
+  }
+
+  return response.json() as Promise<DocumentUploadResponse>;
+}
+
+export async function fetchProjectDocuments(projectId: string): Promise<DocumentListResponse> {
+  const response = await fetch(`${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/documents`);
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail?.[0]?.msg ?? error?.detail ?? `Failed to fetch documents (${response.status})`);
+  }
+  return response.json() as Promise<DocumentListResponse>;
+}
+
+export async function deleteProjectDocument(projectId: string, documentId: string): Promise<{ status: string; message: string }> {
+  const response = await fetch(
+    `${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail?.[0]?.msg ?? error?.detail ?? `Failed to delete document (${response.status})`);
+  }
+
+  return response.json();
+}
+
+export function getDocumentDownloadUrl(projectId: string, documentId: string): string {
+  return `${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}/download`;
+}

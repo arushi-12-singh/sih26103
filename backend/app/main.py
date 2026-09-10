@@ -6,11 +6,13 @@ from typing import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes.documents import router as documents_router
 from app.api.routes.gis import router as gis_router
 from app.api.routes.intelligence import router as intelligence_router
 from app.api.routes.prediction import router as prediction_router
 from app.api.routes.priority import router as priority_router
 from app.api.routes.similarity import router as similarity_router
+from app.services.document_service import build_document_service
 from app.services.gis_service import build_gis_service
 from app.services.prediction_service import build_prediction_service
 from app.services.priority_service import build_priority_service
@@ -38,6 +40,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.gis_service = None
         app.state.gis_error = str(exc)
     app.state.priority_service = build_priority_service()
+    if getattr(app.state, "document_service", None) is None:
+        app.state.document_service = build_document_service()
     yield
 
 
@@ -46,7 +50,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 app.include_router(prediction_router, prefix="/api/v1")
@@ -54,6 +58,7 @@ app.include_router(similarity_router, prefix="/api/v1")
 app.include_router(intelligence_router, prefix="/api/v1")
 app.include_router(priority_router, prefix="/api/v1")
 app.include_router(gis_router, prefix="/api/v1")
+app.include_router(documents_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["system"])
