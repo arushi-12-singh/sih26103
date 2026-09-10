@@ -70,8 +70,6 @@ def project_intelligence(request: Request, payload: ProjectRiskRequest) -> Proje
         similar_projects=similar_projects,
         historical_evidence=historical_evidence,
         historical_summary=historical_summary,
-        prediction=prediction_result,
-        similarity=similarity_result,
     )
 
 
