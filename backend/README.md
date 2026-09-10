@@ -13,7 +13,7 @@ This phase implements:
 - Pydantic request and response validation
 - Health check and CORS for the Next.js frontend
 
-Authentication, persistence, anomaly detection, RAG, LLM features, and other product capabilities are intentionally out of scope.
+The SLA alert matrix is an additional capability and does not change the prediction model or project-intelligence contract.
 
 ## Project setup
 
@@ -78,6 +78,8 @@ uvicorn app.main:app --reload
 ```
 
 The API is available at `http://127.0.0.1:8000` and interactive docs are at `/docs`.
+
+For local demos, copy the repository-root `.env.example` to a local `.env` and leave `MSG91_ENABLED=false`. SLA rules and explicitly configured milestone deadlines live in `data/sla_config.json`; they are kept separate from the project CSV.
 
 ## Endpoints
 
@@ -382,6 +384,15 @@ Example response (verified live output):
   ]
 }
 ```
+
+### SLA alert endpoints
+
+- `GET /api/v1/projects/{project_id}/sla` evaluates configured SLA status and applies duplicate-protected notification rules.
+- `POST /api/v1/projects/{project_id}/sla/evaluate` evaluates the same workflow explicitly.
+- `POST /api/v1/projects/{project_id}/sla/test-alert` is a controlled demo trigger; its recipient always comes from backend configuration.
+- `GET /api/v1/projects/{project_id}/sla/audit` returns masked notification audit events.
+
+`GREEN` is healthy, `AMBER` is approaching the configured deadline, `RED` is breached, and `CRITICAL` is a breach with a high saved-model risk score. With `MSG91_ENABLED=false`, breach alerts are recorded as `dry_run` and no provider request is made. MSG91 credentials are never returned by an API.
 
 ## Architecture
 

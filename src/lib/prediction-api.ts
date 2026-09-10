@@ -198,3 +198,30 @@ export async function deleteProjectDocument(projectId: string, documentId: strin
 export function getDocumentDownloadUrl(projectId: string, documentId: string): string {
   return `${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}/download`;
 }
+
+export type SlaStatusResponse = {
+  project_id: string;
+  milestone: string;
+  deadline: string;
+  sla_status: string;
+  days_remaining: number;
+  days_overdue: number;
+  severity: string;
+  escalation_level: string;
+  notification_required: boolean;
+  ai_risk_score: number | null;
+  notification_status: string;
+  notification_recipient?: string | null;
+  notification_timestamp?: string | null;
+  msg91_request_id?: string | null;
+  notification_error?: string | null;
+};
+
+export async function getProjectSla(projectId: string): Promise<SlaStatusResponse> {
+  const response = await fetch(`${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/sla`);
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail ?? `SLA status failed (${response.status})`);
+  }
+  return response.json() as Promise<SlaStatusResponse>;
+}
