@@ -17,6 +17,10 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
+from app.schemas.intelligence import ProjectIntelligenceResponse
+from app.schemas.project import ProjectRiskResponse
+from app.schemas.similarity import SimilarityResponse
+
 # ---------------------------------------------------------------------------
 # Shared payloads
 # ---------------------------------------------------------------------------
@@ -109,8 +113,99 @@ class TestSmoke:
         r = client.post("/api/v1/project-intelligence", json=HIGH_RISK_PROJECT)
         assert r.status_code == 200
         data = r.json()
-        assert "prediction" in data
-        assert "similarity" in data
+        assert "project_risk" in data
+        assert "similar_projects" in data
+
+    def test_projects(self, client: TestClient) -> None:
+        r = client.get("/api/v1/projects")
+        assert r.status_code == 200
+        projects = r.json()
+        assert projects
+        assert "project_id" in projects[0]
+        assert "is_delayed" not in projects[0]
+
+    def test_project_filters(self, client: TestClient) -> None:
+        r = client.get("/api/v1/projects", params={"sector": "Railways", "state": "Kerala"})
+        assert r.status_code == 200
+        assert all(
+            project["sector"] == "Railways" and project["state"] == "Kerala"
+            for project in r.json()
+        )
+
+    def test_specific_project(self, client: TestClient) -> None:
+        projects = client.get("/api/v1/projects").json()
+        project_id = projects[0]["project_id"]
+        r = client.get(f"/api/v1/projects/{project_id}")
+        assert r.status_code == 200
+        assert r.json()["project_id"] == project_id
+
+    def test_unknown_project(self, client: TestClient) -> None:
+        r = client.get("/api/v1/projects/DOES-NOT-EXIST")
+        assert r.status_code == 404
+
+
+# ===================================================================
+# Response contracts — current flat intelligence API
+# ===================================================================
+
+
+class TestResponseContracts:
+    """Validate response schemas and composition across the model endpoints."""
+
+    def test_prediction_response_schema(self, client: TestClient) -> None:
+        response = client.post("/api/v1/predict-risk", json=HIGH_RISK_PROJECT)
+        assert response.status_code == 200
+        parsed = ProjectRiskResponse.model_validate(response.json())
+        assert set(response.json()) == {"project_risk", "top_risk_factors", "summary"}
+        assert parsed.project_risk.risk_percentage > 60
+
+    def test_similarity_response_schema(self, client: TestClient) -> None:
+        response = client.post("/api/v1/similar-projects", json=HIGH_RISK_PROJECT)
+        assert response.status_code == 200
+        parsed = SimilarityResponse.model_validate(response.json())
+        assert set(response.json()) == {"matches", "evidence"}
+        assert parsed.matches
+
+    def test_intelligence_response_schema(self, client: TestClient) -> None:
+        response = client.post("/api/v1/project-intelligence", json=HIGH_RISK_PROJECT)
+        assert response.status_code == 200
+        parsed = ProjectIntelligenceResponse.model_validate(response.json())
+        assert set(response.json()) == {
+            "project_risk",
+            "top_risk_factors",
+            "risk_summary",
+            "similar_projects",
+            "historical_evidence",
+            "historical_summary",
+        }
+        assert "prediction" not in response.json()
+        assert "similarity" not in response.json()
+        assert parsed.similar_projects
+
+    def test_intelligence_reflects_prediction_and_similarity(
+        self, client: TestClient
+    ) -> None:
+        prediction = client.post("/api/v1/predict-risk", json=HIGH_RISK_PROJECT)
+        similarity = client.post("/api/v1/similar-projects", json=HIGH_RISK_PROJECT)
+        intelligence = client.post("/api/v1/project-intelligence", json=HIGH_RISK_PROJECT)
+        assert prediction.status_code == similarity.status_code == intelligence.status_code == 200
+
+        prediction_data = prediction.json()
+        similarity_data = similarity.json()
+        intelligence_data = intelligence.json()
+        assert intelligence_data["project_risk"] == prediction_data["project_risk"]
+        assert intelligence_data["top_risk_factors"] == prediction_data["top_risk_factors"]
+        assert intelligence_data["risk_summary"] == prediction_data["summary"]
+
+        for intelligence_match, similarity_match in zip(
+            intelligence_data["similar_projects"], similarity_data["matches"]
+        ):
+            assert intelligence_match["project_id"] == similarity_match["project_id"]
+            assert intelligence_match["similarity_score"] == similarity_match["similarity_percentage"]
+            assert intelligence_match["sector"] == similarity_match["sector"]
+            assert intelligence_match["state"] == similarity_match["state"]
+            assert intelligence_match["actual_delay_months"] == similarity_match["actual_delay_months"]
+            assert intelligence_match["primary_delay_cause"] == similarity_match["primary_delay_cause"]
 
 
 # ===================================================================
@@ -231,16 +326,16 @@ class TestTC3MilestoneSensitivity:
         return out
 
     def test_risk_increases_with_milestones(self, results: dict[int, dict]) -> None:
-        pcts = {n: results[n]["prediction"]["project_risk"]["risk_percentage"] for n in (0, 5, 10)}
+        pcts = {n: results[n]["project_risk"]["risk_percentage"] for n in (0, 5, 10)}
         assert pcts[0] <= pcts[5] <= pcts[10], f"Risk should increase: {pcts}"
 
     def test_similarity_results_change(self, results: dict[int, dict]) -> None:
-        ids_0 = [m["project_id"] for m in results[0]["similarity"]["matches"]]
-        ids_10 = [m["project_id"] for m in results[10]["similarity"]["matches"]]
+        ids_0 = [m["project_id"] for m in results[0]["similar_projects"]]
+        ids_10 = [m["project_id"] for m in results[10]["similar_projects"]]
         # With such different milestone profiles, at least one match should differ
         # (or at minimum the similarity percentages should differ)
-        sims_0 = [m["similarity_percentage"] for m in results[0]["similarity"]["matches"]]
-        sims_10 = [m["similarity_percentage"] for m in results[10]["similarity"]["matches"]]
+        sims_0 = [m["similarity_score"] for m in results[0]["similar_projects"]]
+        sims_10 = [m["similarity_score"] for m in results[10]["similar_projects"]]
         assert ids_0 != ids_10 or sims_0 != sims_10, (
             "Similarity results should change when milestones_delayed goes from 0 to 10"
         )

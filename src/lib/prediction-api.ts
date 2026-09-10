@@ -16,6 +16,16 @@ export type ProjectRiskInput = {
   previous_schedule_deviation: number;
 };
 
+export type ProjectRecord = ProjectRiskInput & {
+  project_id: string;
+};
+
+export type ProjectListFilters = {
+  search?: string;
+  sector?: string;
+  state?: string;
+};
+
 export type RiskFactor = {
   factor: string;
   impact: "increases_risk" | "reduces_risk";
@@ -75,6 +85,69 @@ export type SimilarityResponse = {
   matches: HistoricalProjectMatch[];
   evidence: SimilarityEvidence;
 };
+
+export type ProjectIntelligenceResponse = {
+  project_risk: ProjectRiskResponse["project_risk"];
+  top_risk_factors: RiskFactor[];
+  risk_summary: string;
+  similar_projects: Array<{
+    project_id: string;
+    similarity_score: number;
+    sector: string;
+    state: string;
+    actual_delay_months: number;
+    actual_cost_overrun_percentage: number;
+    primary_delay_cause: string;
+  }>;
+  historical_evidence: {
+    projects_analyzed: number;
+    significant_delay_percentage: number;
+    average_actual_delay_months: number;
+    most_common_delay_cause: string;
+  };
+  historical_summary: string;
+};
+
+async function readApiError(response: Response, fallback: string): Promise<Error> {
+  const error = await response.json().catch(() => null);
+  return new Error(error?.detail?.[0]?.msg ?? error?.detail ?? `${fallback} (${response.status})`);
+}
+
+export async function getProject(projectId: string): Promise<ProjectRecord> {
+  const response = await fetch(`${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}`);
+  if (!response.ok) {
+    throw await readApiError(response, "Project lookup failed");
+  }
+  return response.json() as Promise<ProjectRecord>;
+}
+
+export async function getProjects(filters: ProjectListFilters = {}): Promise<ProjectRecord[]> {
+  const params = new URLSearchParams();
+  if (filters.search) params.set("search", filters.search);
+  if (filters.sector) params.set("sector", filters.sector);
+  if (filters.state) params.set("state", filters.state);
+  const query = params.toString();
+  const response = await fetch(`${API_URL}/api/v1/projects${query ? `?${query}` : ""}`);
+  if (!response.ok) {
+    throw await readApiError(response, "Project list failed");
+  }
+  return response.json() as Promise<ProjectRecord[]>;
+}
+
+export async function getProjectIntelligence(
+  projectId: string,
+  input: ProjectRiskInput,
+): Promise<ProjectIntelligenceResponse> {
+  const response = await fetch(`${API_URL}/api/v1/project-intelligence`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...input, project_id: projectId }),
+  });
+  if (!response.ok) {
+    throw await readApiError(response, "Project intelligence failed");
+  }
+  return response.json() as Promise<ProjectIntelligenceResponse>;
+}
 
 export async function findSimilarProjects(input: ProjectRiskInput): Promise<SimilarityResponse> {
   const response = await fetch(`${API_URL}/api/v1/similar-projects`, {

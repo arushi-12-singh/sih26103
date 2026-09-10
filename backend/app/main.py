@@ -8,8 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.intelligence import router as intelligence_router
 from app.api.routes.prediction import router as prediction_router
+from app.api.routes.projects import router as projects_router
 from app.api.routes.similarity import router as similarity_router
 from app.services.prediction_service import build_prediction_service
+from app.services.project_service import build_project_service
 from app.services.similarity_service import build_similarity_service
 
 
@@ -27,6 +29,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except (FileNotFoundError, ValueError, OSError) as exc:
         app.state.similarity_service = None
         app.state.similarity_error = str(exc)
+    try:
+        app.state.project_service = build_project_service()
+        app.state.project_error = None
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        app.state.project_service = None
+        app.state.project_error = str(exc)
     yield
 
 
@@ -41,6 +49,7 @@ app.add_middleware(
 app.include_router(prediction_router, prefix="/api/v1")
 app.include_router(similarity_router, prefix="/api/v1")
 app.include_router(intelligence_router, prefix="/api/v1")
+app.include_router(projects_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["system"])
