@@ -88,3 +88,29 @@ export async function findSimilarProjects(input: ProjectRiskInput): Promise<Simi
   }
   return response.json() as Promise<SimilarityResponse>;
 }
+
+export type SlaStatusResponse = {
+  project_id: string;
+  milestone: string;
+  deadline: string;
+  sla_status: string;
+  days_remaining: number;
+  days_overdue: number;
+  severity: string;
+  escalation_level: string;
+  notification_required: boolean;
+  ai_risk_score: number | null;
+  notification_status: string;
+  notification_recipient?: string | null;
+  notification_timestamp?: string | null;
+  msg91_request_id?: string | null;
+};
+
+export async function getProjectSla(projectId: string): Promise<SlaStatusResponse> {
+  const response = await fetch(`${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/sla`);
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail ?? `SLA status failed (${response.status})`);
+  }
+  return response.json() as Promise<SlaStatusResponse>;
+}

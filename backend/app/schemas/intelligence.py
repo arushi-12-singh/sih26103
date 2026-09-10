@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from app.schemas.project import ProjectRiskSummary, RiskFactor
+from app.schemas.project import ProjectRiskResponse, ProjectRiskSummary, RiskFactor
+from app.schemas.similarity import SimilarityResponse
 
 
 class IntelligenceSimilarProject(BaseModel):
@@ -35,3 +36,6 @@ class ProjectIntelligenceResponse(BaseModel):
     similar_projects: list[IntelligenceSimilarProject]
     historical_evidence: IntelligenceHistoricalEvidence
     historical_summary: str
+    # Retain the original nested contract while exposing the newer flat fields.
+    prediction: ProjectRiskResponse
+    similarity: SimilarityResponse
