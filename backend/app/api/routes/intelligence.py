@@ -7,9 +7,14 @@ from app.schemas.intelligence import (
     IntelligenceSimilarProject,
     ProjectIntelligenceResponse,
 )
-from app.schemas.project import ProjectRiskRequest
+from app.schemas.intelligence import ProjectIntelligenceRequest
+from app.services.gis_intelligence_service import build_gis_signal
+from app.services.intervention_service import InterventionService
 from app.services.prediction_service import SavedPredictionService
+from app.schemas.priority import PriorityRequest
+from app.services.priority_service import PriorityService
 from app.services.similarity_service import SimilarityService
+from app.services.spatial_analysis_service import InvalidCoordinateError, SpatialAnalysisService
 
 router = APIRouter(tags=["intelligence"])
 
@@ -20,12 +25,15 @@ router = APIRouter(tags=["intelligence"])
     status_code=status.HTTP_200_OK,
     summary="Combined delay-risk prediction and historical similarity",
     description=(
-        "Runs risk prediction (XGBoost + SHAP) and historical similarity search "
-        "(NearestNeighbors) for one project in a single call, reusing PredictionService "
-        "and SimilarityService directly -- no internal HTTP requests."
+        "Runs the full intelligence pipeline for one project in a single call: XGBoost risk "
+        "prediction, SHAP explanation, historical similarity, GIS boundary screening (when "
+        "coordinates are supplied), the priority engine, and rule-based intervention "
+        "recommendations. Every stage reuses its service directly in-process -- no internal "
+        "HTTP requests. Coordinates are optional; without them the response is exactly what it "
+        "was before the GIS module existed, plus priority and interventions."
     ),
 )
-def project_intelligence(request: Request, payload: ProjectRiskRequest) -> ProjectIntelligenceResponse:
+def project_intelligence(request: Request, payload: ProjectIntelligenceRequest) -> ProjectIntelligenceResponse:
     """Run risk prediction and historical similarity search in a single call.
 
     Reuses PredictionService and SimilarityService directly — no internal HTTP
@@ -62,10 +70,51 @@ def project_intelligence(request: Request, payload: ProjectRiskRequest) -> Proje
     if prediction_result is None or similarity_result is None:
         raise HTTPException(status_code=503, detail="; ".join(errors))
 
+    # --- GIS boundary screening (only when the caller supplied a location) ---
+    # Optional stage: a project with no surveyed coordinates still gets the full
+    # non-spatial pipeline rather than an error.
+    gis_signal = None
+    if payload.has_location:
+        spatial_svc: SpatialAnalysisService | None = getattr(request.app.state, "spatial_analysis_service", None)
+        if spatial_svc is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Coordinates were supplied but the GIS spatial engine is unavailable.",
+            )
+        try:
+            gis_signal = build_gis_signal(
+                spatial_svc.analyze(payload.latitude, payload.longitude, payload.buffer_meters)
+            )
+        except InvalidCoordinateError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     # --- Build flat response ---
     similar_projects = _build_similar_projects(similarity_result)
     historical_evidence = _build_evidence(similarity_result)
     historical_summary = _build_historical_summary(historical_evidence)
+
+    # --- Priority, then interventions ---
+    # Both read already-computed evidence; neither re-runs a model. The GIS signal is
+    # passed through as structured features only -- no geometry crosses this boundary.
+    priority_result = None
+    interventions = []
+    priority_svc: PriorityService | None = getattr(request.app.state, "priority_service", None)
+    if priority_svc is not None:
+        priority_result = priority_svc.assess(
+            PriorityRequest.model_validate(payload.model_dump()),
+            prediction_result,
+            similarity_result,
+            gis_signal=gis_signal,
+        )
+        intervention_svc: InterventionService | None = getattr(request.app.state, "intervention_service", None)
+        if intervention_svc is not None:
+            interventions = intervention_svc.recommend(
+                payload,
+                similarity_result,
+                priority_result,
+                prediction_result.project_risk.delay_probability,
+                gis_signal=gis_signal,
+            )
 
     return ProjectIntelligenceResponse(
         project_risk=prediction_result.project_risk,
@@ -74,6 +123,9 @@ def project_intelligence(request: Request, payload: ProjectRiskRequest) -> Proje
         similar_projects=similar_projects,
         historical_evidence=historical_evidence,
         historical_summary=historical_summary,
+        gis_screening=gis_signal,
+        priority=priority_result,
+        interventions=interventions,
     )
 
 

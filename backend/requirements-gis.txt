@@ -1,0 +1,17 @@
+# Optional GIS extras for the boundary data layer (Feature 4).
+#
+# The core layer needs only `shapely` (already in requirements.txt): it covers GeoJSON
+# import, geometry validation, and the GeoJSON file backend. Install these as well when
+# you need any of:
+#
+#   * Shapefile (.shp) or GeoPackage (.gpkg) import      -> geopandas (+ pyogrio)
+#   * The PostgreSQL/PostGIS storage backend             -> psycopg
+#
+# `shapely` and `pyproj` are NOT here -- they moved into requirements.txt when the
+# spatial analysis engine landed, because it cannot compute a metre-accurate result
+# without projecting coordinates.
+#
+# Install with:  pip install -r requirements-gis.txt
+-r requirements.txt
+geopandas>=1.0,<2.0
+psycopg[binary]>=3.2,<4.0

@@ -5,7 +5,9 @@ from fastapi import APIRouter, HTTPException, Request, status
 from app.schemas.priority import PriorityRequest, PriorityResponse
 from app.services.prediction_service import SavedPredictionService
 from app.services.priority_service import PriorityService
+from app.services.gis_intelligence_service import build_gis_signal
 from app.services.similarity_service import SimilarityService
+from app.services.spatial_analysis_service import InvalidCoordinateError, SpatialAnalysisService
 
 router = APIRouter(tags=["priority"])
 
@@ -49,4 +51,21 @@ def get_project_priority(request: Request, payload: PriorityRequest) -> Priority
     except (ValueError, RuntimeError) as exc:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Similarity search failed: {exc}") from exc
 
-    return priority_svc.assess(payload, project_risk, similarity)
+    # GIS is an optional sixth component. Without coordinates the engine uses the
+    # original five-component profile and returns exactly the score it always did.
+    gis_signal = None
+    if payload.has_location:
+        spatial_svc: SpatialAnalysisService | None = getattr(request.app.state, "spatial_analysis_service", None)
+        if spatial_svc is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Coordinates were supplied but the GIS spatial engine is unavailable.",
+            )
+        try:
+            gis_signal = build_gis_signal(
+                spatial_svc.analyze(payload.latitude, payload.longitude, payload.buffer_meters)
+            )
+        except InvalidCoordinateError as exc:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+
+    return priority_svc.assess(payload, project_risk, similarity, gis_signal=gis_signal)

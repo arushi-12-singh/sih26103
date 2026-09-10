@@ -1,7 +1,20 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      {
+        source: "/geospatial",
+        destination: "/gis-check",
+        permanent: false,
+      },
+      {
+        source: "/geospatial-view",
+        destination: "/gis-check",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

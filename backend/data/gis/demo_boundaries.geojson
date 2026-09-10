@@ -1,0 +1,308 @@
+{
+  "type": "FeatureCollection",
+  "notice": "DEMO DATA - NOT OFFICIAL BOUNDARIES",
+  "description": "Fictional test boundaries for the PAIMANA GIS boundary data layer. Every geometry here is invented, sits in a made-up 'DEMO STATE', and corresponds to no real protected area. These must never be presented as official government boundaries, and must never be used for any real clearance, siting, or compliance decision.",
+  "crs_note": "Coordinates are EPSG:4326 (WGS84 longitude/latitude), per RFC 7946.",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "DEMO-NP-001",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              78.1,
+              21.1
+            ],
+            [
+              78.3,
+              21.1
+            ],
+            [
+              78.3,
+              21.3
+            ],
+            [
+              78.1,
+              21.3
+            ],
+            [
+              78.1,
+              21.1
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Demo National Park",
+        "category": "NATIONAL_PARK",
+        "state": "DEMO STATE",
+        "district": "Demo North District",
+        "last_updated": "2026-09-10",
+        "is_demo": true,
+        "data_notice": "DEMO DATA - NOT OFFICIAL BOUNDARIES",
+        "fictional": true,
+        "description": "Fictional core protected area used to exercise the boundary data layer."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DEMO-ESZ-001",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              78.05,
+              21.05
+            ],
+            [
+              78.35,
+              21.05
+            ],
+            [
+              78.35,
+              21.35
+            ],
+            [
+              78.05,
+              21.35
+            ],
+            [
+              78.05,
+              21.05
+            ]
+          ],
+          [
+            [
+              78.1,
+              21.1
+            ],
+            [
+              78.1,
+              21.3
+            ],
+            [
+              78.3,
+              21.3
+            ],
+            [
+              78.3,
+              21.1
+            ],
+            [
+              78.1,
+              21.1
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Demo Eco-Sensitive Zone",
+        "category": "ECO_SENSITIVE_ZONE",
+        "state": "DEMO STATE",
+        "district": "Demo North District",
+        "last_updated": "2026-09-10",
+        "is_demo": true,
+        "data_notice": "DEMO DATA - NOT OFFICIAL BOUNDARIES",
+        "fictional": true,
+        "description": "Fictional buffer ring around Demo National Park; exercises interior-ring (hole) handling."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DEMO-WLS-001",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              78.5,
+              21.4
+            ],
+            [
+              78.7,
+              21.4
+            ],
+            [
+              78.7,
+              21.6
+            ],
+            [
+              78.5,
+              21.6
+            ],
+            [
+              78.5,
+              21.4
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Demo Wildlife Sanctuary",
+        "category": "WILDLIFE_SANCTUARY",
+        "state": "DEMO STATE",
+        "district": "Demo North District",
+        "last_updated": "2026-09-10",
+        "is_demo": true,
+        "data_notice": "DEMO DATA - NOT OFFICIAL BOUNDARIES",
+        "fictional": true,
+        "description": "Fictional sanctuary used to exercise category filtering."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DEMO-FOR-001",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              78.45,
+              20.8
+            ],
+            [
+              78.75,
+              20.8
+            ],
+            [
+              78.75,
+              21.05
+            ],
+            [
+              78.45,
+              21.05
+            ],
+            [
+              78.45,
+              20.8
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Demo Protected Forest",
+        "category": "FOREST",
+        "state": "DEMO STATE",
+        "district": "Demo South District",
+        "last_updated": "2026-09-10",
+        "is_demo": true,
+        "data_notice": "DEMO DATA - NOT OFFICIAL BOUNDARIES",
+        "fictional": true,
+        "description": "Fictional forest block used to exercise district filtering."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DEMO-TR-001",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                79.0,
+                21.0
+              ],
+              [
+                79.2,
+                21.0
+              ],
+              [
+                79.2,
+                21.15
+              ],
+              [
+                79.0,
+                21.15
+              ],
+              [
+                79.0,
+                21.0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                79.3,
+                21.2
+              ],
+              [
+                79.45,
+                21.2
+              ],
+              [
+                79.45,
+                21.35
+              ],
+              [
+                79.3,
+                21.35
+              ],
+              [
+                79.3,
+                21.2
+              ]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Demo Tiger Reserve",
+        "category": "TIGER_RESERVE",
+        "state": "DEMO STATE",
+        "district": "Demo East District",
+        "last_updated": "2026-09-10",
+        "is_demo": true,
+        "data_notice": "DEMO DATA - NOT OFFICIAL BOUNDARIES",
+        "fictional": true,
+        "description": "Fictional two-part reserve; exercises MultiPolygon storage and bbox queries."
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "DEMO-RAM-001",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              78.9,
+              20.6
+            ],
+            [
+              78.98,
+              20.6
+            ],
+            [
+              78.98,
+              20.68
+            ],
+            [
+              78.9,
+              20.68
+            ],
+            [
+              78.9,
+              20.6
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Demo Ramsar Wetland",
+        "category": "RAMSAR_WETLAND",
+        "state": "DEMO STATE",
+        "district": "Demo South District",
+        "last_updated": "2026-09-10",
+        "is_demo": true,
+        "data_notice": "DEMO DATA - NOT OFFICIAL BOUNDARIES",
+        "fictional": true,
+        "description": "Fictional wetland; the smallest demo geometry, exercising the minimum-area guard."
+      }
+    }
+  ]
+}

@@ -1,20 +1,76 @@
 "use client";
 
 import { useState } from "react";
-import { Activity, AlertTriangle, ArrowLeft, ArrowUpRight, Bell, CalendarDays, Check, ChevronDown, ChevronRight, ClipboardList, Clock3, FileOutput, Gauge, LayoutDashboard, Map, Menu, MoreHorizontal, Search, Settings, ShieldCheck, Sparkles, Target, TrendingDown, TrendingUp, X } from "lucide-react";
-import { predictProjectRisk, findSimilarProjects, type ProjectRiskInput, type ProjectRiskResponse, type SimilarityResponse } from "@/lib/prediction-api";
+import Link from "next/link";
+import { Activity, AlertTriangle, ArrowLeft, ArrowUpRight, Bell, CalendarDays, Check, ChevronDown, ChevronRight, ClipboardList, FileOutput, Gauge, LayoutDashboard, Map, Menu, MoreHorizontal, Search, Settings, ShieldCheck, Sparkles, Target, X } from "lucide-react";
+import { predictProjectRisk, findSimilarProjects, fetchProjectIntelligence, type ProjectRiskInput, type ProjectRiskResponse, type SimilarityResponse, type GisScreening } from "@/lib/prediction-api";
+import { GisScreeningPanel } from "@/components/intelligence/gis-screening-panel";
+import { GIS_PROJECTS } from "@/lib/gis-projects";
+
+// This report covers EFC-04. Its surveyed location comes from the shared project
+// catalogue, so the intelligence page and /gis-check always screen the same point.
+const REPORT_PROJECT = GIS_PROJECTS.find((project) => project.id === "EFC-04") ?? GIS_PROJECTS[0];
 
 const drivers = [{ name: "Land acquisition", value: 34, color: "#c95740" }, { name: "Milestone slippage", value: 26, color: "#d88049" }, { name: "Financial progress gap", value: 17, color: "#bb9840" }, { name: "Pending clearance", value: 13, color: "#74967c" }];
 
 const interventions = [{ rank: "01", title: "Accelerate Land Acquisition Resolution", why: "Primary contributor to current risk.", impact: "Potential reduction of projected delay by 3-5 months.", confidence: "Based on historical intervention patterns." }, { rank: "02", title: "Review Critical Milestone Dependencies", why: "Three packages share a delayed right-of-way handover.", impact: "Potentially recover 2 months on the critical path.", confidence: "Model confidence: High." }, { rank: "03", title: "Conduct Funding Bottleneck Assessment", why: "Financial progress is 17% below expected trajectory.", impact: "Protect up to Rs 120 Cr from cost escalation.", confidence: "Based on current cash-flow signals." }];
 
 function RiskPill({ children }: { children: React.ReactNode }) { return <span className="risk-pill critical"><i />{children}</span>; }
-function Sidebar({ active, setActive }: { active: string; setActive: (value: string) => void }) { const items = [{ label: "Overview", icon: LayoutDashboard }, { label: "Project portfolio", icon: ClipboardList }, { label: "Risk signals", icon: AlertTriangle }, { label: "Geospatial view", icon: Map }]; return <aside className="sidebar"><div className="brand"><span className="brand-mark"><Activity size={17} /></span><span>PAIMANA</span><small>INTELLIGENCE</small></div><div className="workspace-label">WORKSPACE <ChevronDown size={13} /></div><div className="workspace-name">National Infrastructure <span className="online-dot" /></div><nav><p className="nav-label">MONITORING</p>{items.map(({ label, icon: Icon }) => <button key={label} className={active === label ? "nav-item active" : "nav-item"} onClick={() => setActive(label)}><Icon size={17} />{label}{label === "Risk signals" && <b>7</b>}</button>)}<p className="nav-label second">DECISIONS</p>{[{ label: "Interventions", icon: ShieldCheck }, { label: "Scenario lab", icon: Gauge }].map(({ label, icon: Icon }) => <button key={label} className="nav-item" onClick={() => setActive(label)}><Icon size={17} />{label}</button>)}</nav><div className="sidebar-bottom"><button className="nav-item"><Settings size={17} />Workspace settings</button><div className="user-mini"><span>AS</span><div><strong>Ananya Sharma</strong><small>Portfolio director</small></div><MoreHorizontal size={16} /></div></div></aside>; }
+function Sidebar({ active, setActive }: { active: string; setActive: (value: string) => void }) {
+  const items = [
+    { label: "Overview", icon: LayoutDashboard, href: "/" },
+    { label: "Project portfolio", icon: ClipboardList, href: "/" },
+    { label: "Risk signals", icon: AlertTriangle },
+    { label: "Geospatial view", icon: Map, href: "/gis-check" },
+  ];
+  return (
+    <aside className="sidebar">
+      <div className="brand"><span className="brand-mark"><Activity size={17} /></span><span>PAIMANA</span><small>INTELLIGENCE</small></div>
+      <div className="workspace-label">WORKSPACE <ChevronDown size={13} /></div>
+      <div className="workspace-name">National Infrastructure <span className="online-dot" /></div>
+      <nav>
+        <p className="nav-label">MONITORING</p>
+        {items.map(({ label, icon: Icon, href }) =>
+          href ? (
+            <Link
+              key={label}
+              href={href}
+              className={active === label ? "nav-item active" : "nav-item"}
+              onClick={() => setActive(label)}
+            >
+              <Icon size={17} />{label}{label === "Risk signals" && <b>7</b>}
+            </Link>
+          ) : (
+            <button
+              key={label}
+              type="button"
+              className={active === label ? "nav-item active" : "nav-item"}
+              onClick={() => setActive(label)}
+            >
+              <Icon size={17} />{label}{label === "Risk signals" && <b>7</b>}
+            </button>
+          )
+        )}
+        <p className="nav-label second">DECISIONS</p>
+        {[{ label: "Interventions", icon: ShieldCheck }, { label: "Scenario lab", icon: Gauge }].map(({ label, icon: Icon }) => (
+          <button key={label} type="button" className="nav-item" onClick={() => setActive(label)}>
+            <Icon size={17} />{label}
+          </button>
+        ))}
+      </nav>
+      <div className="sidebar-bottom">
+        <button className="nav-item" type="button"><Settings size={17} />Workspace settings</button>
+        <div className="user-mini"><span>AS</span><div><strong>Ananya Sharma</strong><small>Portfolio director</small></div><MoreHorizontal size={16} /></div>
+      </div>
+    </aside>
+  );
+}
 
 export default function Home() {
-  const [active, setActive] = useState("Project intelligence"); const [showSearch, setShowSearch] = useState(false); const [notice, setNotice] = useState(false); const [landStatus, setLandStatus] = useState(34); const [funding, setFunding] = useState(72); const [milestones, setMilestones] = useState(3); const [resources, setResources] = useState(50); const [prediction, setPrediction] = useState<ProjectRiskResponse | null>(null); const [predictionError, setPredictionError] = useState<string | null>(null); const [isPredicting, setIsPredicting] = useState(false); const [similarity, setSimilarity] = useState<SimilarityResponse | null>(null);
+  const [active, setActive] = useState("Overview"); const [showSearch, setShowSearch] = useState(false); const [notice, setNotice] = useState(false); const [landStatus, setLandStatus] = useState(34); const [funding, setFunding] = useState(72); const [milestones, setMilestones] = useState(3); const [resources, setResources] = useState(50); const [prediction, setPrediction] = useState<ProjectRiskResponse | null>(null); const [predictionError, setPredictionError] = useState<string | null>(null); const [isPredicting, setIsPredicting] = useState(false); const [similarity, setSimilarity] = useState<SimilarityResponse | null>(null);
   const projectInput: ProjectRiskInput = { sector: "Railways", state: "Uttar Pradesh", original_cost: 5000, revised_cost: 5400, planned_duration_months: 48, project_age_months: 36, physical_progress: 52, financial_progress: 41, milestones_total: 20, milestones_delayed: 6, land_acquisition_pending: true, clearance_pending: false, funding_issue: true, contractor_issue: false, previous_schedule_deviation: 5 };
-  const runPrediction = async () => { setIsPredicting(true); setPredictionError(null); try { const [pred, sim] = await Promise.all([predictProjectRisk(projectInput), findSimilarProjects(projectInput)]); setPrediction(pred); setSimilarity(sim); } catch (error) { setPredictionError(error instanceof Error ? error.message : "Unable to reach prediction service"); } finally { setIsPredicting(false); } };
+  const [gisScreening, setGisScreening] = useState<GisScreening | null>(null);
+  const runPrediction = async () => { setIsPredicting(true); setPredictionError(null); try { const [pred, sim] = await Promise.all([predictProjectRisk(projectInput), findSimilarProjects(projectInput)]); setPrediction(pred); setSimilarity(sim); /* GIS screening runs against the project's surveyed location. Fetched separately, and its failure is deliberately not fatal: a spatial outage must not hide the risk analysis that already succeeded. */ try { const intel = await fetchProjectIntelligence({ ...projectInput, latitude: REPORT_PROJECT.latitude, longitude: REPORT_PROJECT.longitude, buffer_meters: 2000 }); setGisScreening(intel.gis_screening); } catch { setGisScreening(null); } } catch (error) { setPredictionError(error instanceof Error ? error.message : "Unable to reach prediction service"); } finally { setIsPredicting(false); } };
   const risk = prediction?.project_risk;
   const factors = prediction?.top_risk_factors ?? [];
   const scenarioRisk = Math.max(48, Math.round(96 - (landStatus - 34) * .45 - (funding - 72) * .15 - (3 - milestones) * 5 - (resources - 50) * .12)); const scenarioDelay = Math.max(4, Math.round(10 - (landStatus - 34) * .035 - (funding - 72) * .008 - (3 - milestones) * .8 - (resources - 50) * .02)); const scenarioCost = Math.max(180, Math.round(420 - (96 - scenarioRisk) * 5.6));
@@ -29,6 +85,7 @@ export default function Home() {
         <section className="interventions-detail report-section"><div className="report-title"><span className="section-number">04</span><div><span className="eyebrow">DECISION SUPPORT</span><h2>Recommended interventions</h2><p>Prioritized actions with a measurable effect on the forecast.</p></div></div><div className="intervention-detail-list">{interventions.map(item => <div className="intervention-detail-row" key={item.rank}><span className="intervention-rank">{item.rank}</span><div className="intervention-main"><strong>{item.title}</strong><span>{item.why}</span></div><div><small>ESTIMATED IMPACT</small><p>{item.impact}</p></div><div><small>CONFIDENCE</small><p className="confidence-text">{item.confidence}</p></div><button aria-label={`Review ${item.title}`}><ArrowUpRight size={16} /></button></div>)}</div></section>
         <section className="scenario-section report-section"><div className="report-title"><span className="section-number">05</span><div><span className="eyebrow">SCENARIO SIMULATOR</span><h2>What if we intervene?</h2><p>Adjust the intervention inputs to explore a modeled outcome.</p></div><span className="estimate-label">MODEL ESTIMATES ONLY</span></div><div className="scenario-grid"><div className="scenario-controls"><div className="control"><label>Land acquisition status <b>{landStatus}% resolved</b></label><input type="range" min="34" max="100" value={landStatus} onChange={e => setLandStatus(Number(e.target.value))} /></div><div className="control"><label>Funding availability <b>{funding}% available</b></label><input type="range" min="50" max="100" value={funding} onChange={e => setFunding(Number(e.target.value))} /></div><div className="control"><label>Delayed milestones <b>{milestones} packages</b></label><input type="range" min="0" max="5" value={milestones} onChange={e => setMilestones(Number(e.target.value))} /></div><div className="control"><label>Resource allocation <b>{resources}% of plan</b></label><input type="range" min="25" max="100" value={resources} onChange={e => setResources(Number(e.target.value))} /></div><div className="simulation-status"><Activity size={14} /> Simulation updates as inputs change</div></div><div className="scenario-results"><div className="scenario-card current"><span>CURRENT TRAJECTORY</span><small>No intervention</small><strong>96</strong><label>RISK SCORE</label><div><b>10 months</b><span>Predicted delay</span></div><div><b>Rs 420 Cr</b><span>Estimated cost impact</span></div></div><div className="scenario-arrow"><ArrowUpRight size={20} /></div><div className="scenario-card intervention"><span>INTERVENTION SCENARIO</span><small>Based on current inputs</small><strong>{scenarioRisk}</strong><label>RISK SCORE</label><div><b>{scenarioDelay} months</b><span>Predicted delay</span></div><div><b>Rs {scenarioCost} Cr</b><span>Estimated cost impact</span></div></div></div></div></section>
         <section className="anomaly-section"><div className="anomaly-icon"><AlertTriangle size={17} /></div><div><span className="eyebrow">DATA ANOMALY / VERIFICATION ALERT</span><h3>Unusual progress pattern detected.</h3><p>Physical progress increased by 18% during the latest reporting cycle while financial expenditure remained relatively unchanged.</p></div><div className="anomaly-status"><span>STATUS</span><strong>Verification recommended</strong><button>Open investigation <ArrowUpRight size={14} /></button></div></section>
+        <GisScreeningPanel screening={gisScreening} projectId={REPORT_PROJECT.id} />
         <footer><span><span className="green-dot" /> AI monitoring active</span><span>Data through 03 Sep 2026 · 09:42 IST</span><span>PAIMANA Intelligence v2.4</span></footer>
       </div></main></div>;
 }

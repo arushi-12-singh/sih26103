@@ -94,3 +94,105 @@ export async function findSimilarProjects(input: ProjectRiskInput, topK = 5): Pr
   }
   return response.json() as Promise<SimilarityResponse>;
 }
+
+// --- Full intelligence pipeline (risk -> SHAP -> similarity -> GIS -> priority -> interventions) ---
+
+import type { BoundaryCategory, CollisionType, Severity } from "@/lib/gis-api";
+
+/**
+ * The GIS screening section of the intelligence response.
+ *
+ * Structured evidence only -- no geometry. The map at /gis-check is where geometry
+ * lives; this section carries the verdict the priority engine actually scored.
+ */
+export type GisScreening = {
+  gis_status: CollisionType;
+  gis_severity: Severity | null;
+  buffer_meters: number;
+  collision_count: number;
+  boundaries_checked: number;
+  highest_risk_category: BoundaryCategory | null;
+  highest_risk_category_label: string | null;
+  nearest_boundary: {
+    boundary_id: string;
+    name: string;
+    category: BoundaryCategory;
+    category_label: string;
+    distance_meters: number;
+    collision_type: CollisionType;
+    severity: Severity;
+  } | null;
+  clearance_required: boolean;
+  clearance_flag_count: number;
+  clearance_flags: string[];
+  max_buffer_overlap_percentage: number;
+  total_intersection_area_sqm: number;
+  /** Approved screening wording. Never a permitting determination. */
+  advisory: string;
+  /** Competent-authority verification notice; always displayed alongside a conflict. */
+  disclaimer: string;
+  contains_demo_data: boolean;
+  notice: string | null;
+};
+
+export type PriorityComponent = {
+  name: string;
+  score: number;
+  weight: number;
+  weighted_contribution: number;
+  description: string;
+};
+
+export type PriorityResult = {
+  priority_score: number;
+  weight_profile: "standard" | "with_gis";
+  priority_category: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  recommended_attention_level: string;
+  decision_explanation: string;
+  score_breakdown: PriorityComponent[];
+};
+
+export type InterventionRecommendation = {
+  rank: number;
+  id: string;
+  title: string;
+  category: string;
+  urgency: string;
+  rationale: string;
+  expected_impact: string;
+  evidence_source: string;
+};
+
+export type ProjectIntelligenceResponse = {
+  project_risk: ProjectRiskResponse["project_risk"];
+  top_risk_factors: RiskFactor[];
+  risk_summary: string;
+  similar_projects: HistoricalProjectMatch[];
+  historical_evidence: HistoricalEvidence;
+  historical_summary: string;
+  gis_screening: GisScreening | null;
+  priority: PriorityResult | null;
+  interventions: InterventionRecommendation[];
+};
+
+/**
+ * Run the whole pipeline in one call.
+ *
+ * `latitude`/`longitude` are optional: supplying them adds the GIS screening stage and
+ * switches the priority engine to its GIS weight profile. Omitting them returns the
+ * pipeline exactly as it behaved before the GIS module existed.
+ */
+export async function fetchProjectIntelligence(
+  input: ProjectRiskInput & { latitude?: number | null; longitude?: number | null; buffer_meters?: number },
+): Promise<ProjectIntelligenceResponse> {
+  const response = await fetch(`${API_URL}/api/v1/project-intelligence`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail?.[0]?.msg ?? error?.detail ?? `Intelligence request failed (${response.status})`);
+  }
+  return response.json() as Promise<ProjectIntelligenceResponse>;
+}

@@ -7,7 +7,11 @@ logic and without hunting for magic numbers scattered across the codebase.
 
 from __future__ import annotations
 
-# --- Top-level component weights (must sum to 1.0) ---------------------------------
+# --- Top-level component weights (each profile must sum to 1.0) --------------------
+# TWO profiles, selected by whether GIS screening evidence is available for a project.
+# The GIS-free profile is the ORIGINAL scoring system, unchanged: a project assessed
+# without coordinates scores exactly what it scored before the GIS module existed, so
+# adding GIS never silently re-scores historical assessments or existing callers.
 COMPONENT_WEIGHTS: dict[str, float] = {
     "risk": 0.35,
     "delay": 0.20,
@@ -15,6 +19,24 @@ COMPONENT_WEIGHTS: dict[str, float] = {
     "historical": 0.15,
     "urgency": 0.10,
 }
+
+# Used only when a GIS screening signal is supplied. GIS's 10% is funded by trimming
+# risk (0.35 -> 0.30) and urgency (0.10 -> 0.05): risk still dominates, and urgency --
+# the project's own schedule position -- is the weakest evidence of the five, so it
+# gives way first. Retune here; nothing in priority_service.py hardcodes a weight.
+COMPONENT_WEIGHTS_WITH_GIS: dict[str, float] = {
+    "risk": 0.30,
+    "delay": 0.20,
+    "financial": 0.20,
+    "historical": 0.15,
+    "urgency": 0.05,
+    "gis": 0.10,
+}
+
+
+def weights_for(include_gis: bool) -> dict[str, float]:
+    """The weight profile to score with. The only place the choice is made."""
+    return COMPONENT_WEIGHTS_WITH_GIS if include_gis else COMPONENT_WEIGHTS
 
 # --- Delay component -----------------------------------------------------------
 # "Predicted delay duration" = delay_probability (Feature 1) x average actual delay of
@@ -67,6 +89,54 @@ URGENCY_SUBWEIGHTS: dict[str, float] = {
 SCHEDULE_DEVIATION_MIN: float = -12.0  # most "ahead of schedule" value this system's data produces
 SCHEDULE_DEVIATION_MAX: float = 36.0   # most "behind schedule" value this system's data produces
 
+# --- GIS environmental component (weight 0.10, only in the GIS profile) -------------
+# Scores the project's spatial relationship to protected/restricted areas. It consumes
+# only the STRUCTURED signal produced by app/services/gis_intelligence_service.py --
+# status, severity, overlap, category, clearance flags -- and never geometry. Polygons
+# are not features: an ML model or a weighted score cannot meaningfully consume a ring
+# of coordinates, and feeding one in would be numerology rather than evidence.
+#
+# Three normalized sub-scores, blended by GIS_SUBWEIGHTS, then a clearance floor.
+GIS_STATUS_SCORES: dict[str, float] = {
+    "DIRECT_COLLISION": 100.0,
+    "BUFFER_COLLISION": 70.0,
+    "NEARBY": 35.0,
+    "CLEAR": 0.0,
+}
+
+GIS_SEVERITY_SCORES: dict[str, float] = {
+    "CRITICAL": 100.0,
+    "HIGH": 75.0,
+    "MEDIUM": 50.0,
+    "LOW": 25.0,
+}
+
+# Sub-weights favour status because "is the site inside a protected area?" is a
+# categorically different question from "how much of the buffer overlaps?".
+GIS_SUBWEIGHTS: dict[str, float] = {
+    "status": 0.55,
+    "severity": 0.25,
+    "overlap": 0.20,
+}
+
+# A project needing environmental clearance cannot score low on this component however
+# small the geometric overlap: the obligation itself is the schedule risk.
+GIS_CLEARANCE_FLOOR: float = 50.0
+
+# --- Statutory language -------------------------------------------------------------
+# This system performs SCREENING, not adjudication. It has no authority to decide
+# whether a project is permissible, and must never imply that it does. These strings are
+# the only approved phrasing for a spatial conflict, and are asserted by
+# tests/test_gis_integration.py -- which also fails the build if prohibited
+# determinative wording ("legally rejected", "prohibited", "not permitted", ...) appears
+# anywhere in the response-producing code.
+SPATIAL_CONFLICT_HEADLINE: str = "Potential spatial conflict detected."
+NO_CONFLICT_HEADLINE: str = "No spatial conflict detected within the screened buffer."
+CLEARANCE_DISCLAIMER: str = (
+    "Final clearance requirements must be verified by the competent authority and "
+    "applicable regulations."
+)
+
 # --- Priority categorization -------------------------------------------------------
 # Ascending (threshold, category) pairs; a score above the last threshold is CRITICAL.
 # Mirrors the LOW/MODERATE/HIGH/CRITICAL banding SavedPredictionService already uses.
@@ -83,12 +153,21 @@ ATTENTION_LEVELS: dict[str, str] = {
 def _validate() -> None:
     for label, weights in (
         ("COMPONENT_WEIGHTS", COMPONENT_WEIGHTS),
+        ("COMPONENT_WEIGHTS_WITH_GIS", COMPONENT_WEIGHTS_WITH_GIS),
         ("HISTORICAL_SUBWEIGHTS", HISTORICAL_SUBWEIGHTS),
         ("URGENCY_SUBWEIGHTS", URGENCY_SUBWEIGHTS),
+        ("GIS_SUBWEIGHTS", GIS_SUBWEIGHTS),
     ):
         total = sum(weights.values())
         if abs(total - 1.0) > 1e-9:
             raise ValueError(f"{label} must sum to 1.0, got {total}")
+
+    # The GIS profile must extend the base one, not quietly rename or drop a component.
+    missing = set(COMPONENT_WEIGHTS) - set(COMPONENT_WEIGHTS_WITH_GIS)
+    if missing:
+        raise ValueError(f"COMPONENT_WEIGHTS_WITH_GIS is missing base components: {sorted(missing)}")
+    if set(COMPONENT_WEIGHTS_WITH_GIS) - set(COMPONENT_WEIGHTS) != {"gis"}:
+        raise ValueError("COMPONENT_WEIGHTS_WITH_GIS must add exactly one component: 'gis'.")
 
 
 _validate()

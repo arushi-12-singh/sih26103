@@ -12,12 +12,19 @@ here is an arbitrary or hidden constant.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from app.config import priority_config as config
 from app.schemas.priority import PriorityComponent, PriorityRequest, PriorityResponse
 from app.schemas.project import ProjectRiskResponse
 from app.schemas.similarity import SimilarityResponse
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    # Imported for types alone: the priority engine reads a plain structured signal and
+    # must not acquire a runtime dependency on the GIS module to keep working without it.
+    from app.schemas.gis_signal import GISIntelligenceSignal
 
 # ---------------------------------------------------------------------------------
 # Component calculators -- pure functions, each independently testable, each
@@ -158,27 +165,71 @@ def calculate_urgency_component(
     return float(np.clip(combined, 0, 100))
 
 
+def calculate_gis_component(signal: "GISIntelligenceSignal") -> float:
+    """GIS Environmental component (weight 0.10, GIS profile only).
+
+    Formula: a weighted blend of three already-normalized 0-100 sub-scores, then a floor.
+
+        status_score   = GIS_STATUS_SCORES[gis_status]        # inside / buffer / nearby / clear
+        severity_score = GIS_SEVERITY_SCORES[gis_severity]    # 0 when CLEAR
+        overlap_score  = max_buffer_overlap_percentage        # already a 0-100 share
+        blended        = weighted by GIS_SUBWEIGHTS
+        final          = max(blended, GIS_CLEARANCE_FLOOR) when clearance is required
+
+    The floor exists because a clearance obligation is itself a schedule risk: a project
+    that clips the edge of a sanctuary overlaps almost none of its buffer, but still has
+    to go through the same statutory process as one that overlaps a great deal.
+
+    Consumes only the structured signal -- status, severity, overlap, clearance -- never
+    geometry. See app/schemas/gis_signal.py for why that boundary exists.
+    """
+    status_score = config.GIS_STATUS_SCORES.get(signal.gis_status.value, 0.0)
+    severity_score = (
+        0.0 if signal.gis_severity is None else config.GIS_SEVERITY_SCORES.get(signal.gis_severity.value, 0.0)
+    )
+    overlap_score = float(np.clip(signal.max_buffer_overlap_percentage, 0, 100))
+
+    blended = (
+        status_score * config.GIS_SUBWEIGHTS["status"]
+        + severity_score * config.GIS_SUBWEIGHTS["severity"]
+        + overlap_score * config.GIS_SUBWEIGHTS["overlap"]
+    )
+    if signal.clearance_required:
+        blended = max(blended, config.GIS_CLEARANCE_FLOOR)
+    return float(np.clip(blended, 0, 100))
+
+
 def calculate_priority_score(
     risk_component: float,
     delay_component: float,
     financial_component: float,
     historical_component: float,
     urgency_component: float,
-    weights: dict[str, float] = config.COMPONENT_WEIGHTS,
+    gis_component: float | None = None,
+    weights: dict[str, float] | None = None,
 ) -> float:
-    """Combine the five normalized (0-100) components into the final 0-100 priority score.
+    """Combine the normalized (0-100) components into the final 0-100 priority score.
 
-    Priority Score = risk_component      * 0.35
-                    + delay_component      * 0.20
-                    + financial_component  * 0.20
-                    + historical_component * 0.15
-                    + urgency_component    * 0.10
+    Two weight profiles, chosen by whether GIS evidence is present:
+
+        without GIS (unchanged)          with GIS
+        risk       * 0.35                risk       * 0.30
+        delay      * 0.20                delay      * 0.20
+        financial  * 0.20                financial  * 0.20
+        historical * 0.15                historical * 0.15
+        urgency    * 0.10                urgency    * 0.05
+                                         gis        * 0.10
+
+    Omitting `gis_component` scores exactly as this function did before the GIS module
+    existed -- byte-identical, not merely close -- so no previously-assessed project is
+    silently re-scored.
 
     Every argument must already be normalized to [0, 100] by its own calculate_*
-    function above -- this function applies only the documented weights
-    (app/config/priority_config.COMPONENT_WEIGHTS); it performs no normalization and no
-    raw-value multiplication of its own.
+    function above. This function applies only the documented weights from
+    app/config/priority_config; it performs no normalization and no raw-value
+    multiplication of its own.
     """
+    weights = weights or config.weights_for(gis_component is not None)
     score = (
         risk_component * weights["risk"]
         + delay_component * weights["delay"]
@@ -186,6 +237,8 @@ def calculate_priority_score(
         + historical_component * weights["historical"]
         + urgency_component * weights["urgency"]
     )
+    if gis_component is not None:
+        score += gis_component * weights["gis"]
     return float(np.clip(round(score, 1), 0, 100))
 
 
@@ -201,9 +254,19 @@ class PriorityService:
         payload: PriorityRequest,
         project_risk: ProjectRiskResponse,
         similarity: SimilarityResponse,
+        gis_signal: "GISIntelligenceSignal | None" = None,
     ) -> PriorityResponse:
+        """Score one project.
+
+        `gis_signal` is optional. Supplying it switches to the GIS weight profile and
+        adds a sixth component; omitting it reproduces the original five-component score
+        exactly, so existing callers are unaffected by the GIS module's existence.
+        """
         delay_probability = project_risk.project_risk.delay_probability
         evidence = similarity.historical_evidence
+        # Resolved once so every component in the breakdown reports the same profile the
+        # final score was computed with.
+        weights = config.weights_for(gis_signal is not None)
 
         risk_score = calculate_risk_component(delay_probability)
         delay_score = calculate_delay_component(delay_probability, evidence.average_actual_delay_months)
@@ -220,35 +283,47 @@ class PriorityService:
             self._component(
                 "risk", risk_score,
                 f"XGBoost delay probability of {delay_probability:.0%} ({project_risk.project_risk.risk_level}).",
+                weights,
             ),
             self._component(
                 "delay", delay_score,
                 f"Expected delay of {delay_probability * evidence.average_actual_delay_months:.1f} months "
                 f"(probability {delay_probability:.0%} x historical average {evidence.average_actual_delay_months:.1f} months).",
+                weights,
             ),
             self._component(
                 "financial", financial_score,
                 f"Revised cost {payload.revised_cost:,.0f} with "
                 f"{self._cost_overrun_percentage(payload):.1f}% overrun over original cost "
                 f"{payload.original_cost:,.0f} drives the estimated exposure.",
+                weights,
             ),
             self._component(
                 "historical", historical_score,
                 f"{evidence.significant_delay_percentage:.0f}% of {evidence.projects_analyzed} similar historical "
                 f"projects had significant delays, averaging {evidence.average_actual_delay_months:.1f} months.",
+                weights,
             ),
             self._component(
                 "urgency", urgency_score,
                 f"Project is at {self._schedule_position_pct(payload):.0f}% of its planned duration, with "
                 f"{payload.milestones_delayed}/{payload.milestones_total} milestones delayed and a schedule "
                 f"deviation of {payload.previous_schedule_deviation:.1f}.",
+                weights,
             ),
         ]
 
-        priority_score = calculate_priority_score(risk_score, delay_score, financial_score, historical_score, urgency_score)
+        gis_score = None if gis_signal is None else calculate_gis_component(gis_signal)
+        if gis_signal is not None and gis_score is not None:
+            components.append(self._component("gis", gis_score, self._describe_gis(gis_signal), weights))
+
+        priority_score = calculate_priority_score(
+            risk_score, delay_score, financial_score, historical_score, urgency_score, gis_score, weights
+        )
         category = self._categorize(priority_score)
         return PriorityResponse(
             priority_score=priority_score,
+            weight_profile="with_gis" if gis_signal is not None else "standard",
             priority_category=category,
             recommended_attention_level=config.ATTENTION_LEVELS[category],
             decision_explanation=self._build_explanation(priority_score, category, components),
@@ -268,8 +343,10 @@ class PriorityService:
         return min(100.0, (payload.project_age_months / payload.planned_duration_months) * 100)
 
     @staticmethod
-    def _component(name: str, score: float, description: str) -> PriorityComponent:
-        weight = config.COMPONENT_WEIGHTS[name]
+    def _component(
+        name: str, score: float, description: str, weights: dict[str, float] | None = None
+    ) -> PriorityComponent:
+        weight = (weights or config.COMPONENT_WEIGHTS)[name]
         rounded_score = round(score, 1)
         return PriorityComponent(
             name=name,
@@ -277,6 +354,35 @@ class PriorityService:
             weight=weight,
             weighted_contribution=round(rounded_score * weight, 1),
             description=description,
+        )
+
+    @staticmethod
+    def _describe_gis(signal: "GISIntelligenceSignal") -> str:
+        """Describe the GIS component from the screening signal.
+
+        Reports a screening finding, never a permitting determination -- the wording is
+        fixed in priority_config and asserted by tests/test_gis_integration.py.
+        """
+        if signal.gis_status.value == "CLEAR":
+            return (
+                f"No restricted boundary within the {signal.buffer_meters:,.0f} m screening buffer "
+                f"({signal.boundaries_checked} boundaries screened)."
+            )
+        nearest = signal.nearest_boundary
+        location = (
+            f"{nearest.name} ({nearest.category_label}) at {nearest.distance_meters:,.0f} m"
+            if nearest
+            else "a restricted boundary"
+        )
+        clearance = (
+            f"; {signal.clearance_flag_count} clearance flag"
+            f"{'s' if signal.clearance_flag_count != 1 else ''} raised"
+            if signal.clearance_required
+            else ""
+        )
+        return (
+            f"{signal.gis_status.value.replace('_', ' ').capitalize()} with {location}, "
+            f"{signal.max_buffer_overlap_percentage:.1f}% of the buffer overlapped{clearance}."
         )
 
     @staticmethod
