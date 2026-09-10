@@ -11,11 +11,13 @@ from app.api.routes.gis import router as gis_router
 from app.api.routes.intelligence import router as intelligence_router
 from app.api.routes.prediction import router as prediction_router
 from app.api.routes.priority import router as priority_router
+from app.api.routes.projects import router as projects_router
 from app.api.routes.similarity import router as similarity_router
 from app.services.document_service import build_document_service
 from app.services.gis_service import build_gis_service
 from app.services.prediction_service import build_prediction_service
 from app.services.priority_service import build_priority_service
+from app.services.project_service import build_project_service
 from app.services.similarity_service import build_similarity_service
 
 
@@ -42,6 +44,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.priority_service = build_priority_service()
     if getattr(app.state, "document_service", None) is None:
         app.state.document_service = build_document_service()
+    try:
+        app.state.project_service = build_project_service()
+        app.state.project_error = None
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        app.state.project_service = None
+        app.state.project_error = str(exc)
     yield
 
 
@@ -59,6 +67,7 @@ app.include_router(intelligence_router, prefix="/api/v1")
 app.include_router(priority_router, prefix="/api/v1")
 app.include_router(gis_router, prefix="/api/v1")
 app.include_router(documents_router, prefix="/api/v1")
+app.include_router(projects_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["system"])
@@ -75,4 +84,3 @@ def health() -> dict[str, str | None]:
         "gis_status": "loaded" if gis_available else "unavailable",
         "gis_error": getattr(app.state, "gis_error", None),
     }
-
