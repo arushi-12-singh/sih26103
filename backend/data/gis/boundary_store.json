@@ -1,0 +1,934 @@
+{
+  "type": "FeatureCollection",
+  "name": "gis_boundary_repository_store",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "DEMO-PA-001",
+        "name": "Demo Wildlife Sanctuary",
+        "category": "WILDLIFE_SANCTUARY",
+        "state": "Uttar Pradesh",
+        "district": "Lakhimpur Kheri",
+        "source": "DEMO DATA \u2014 NOT OFFICIAL BOUNDARIES",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": true,
+        "metadata": {
+          "is_demo": true,
+          "designation": "Test / Demo Wildlife Sanctuary Boundary"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.4,
+              28.25
+            ],
+            [
+              80.9,
+              28.25
+            ],
+            [
+              80.9,
+              28.6
+            ],
+            [
+              80.4,
+              28.6
+            ],
+            [
+              80.4,
+              28.25
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "DEMO-PA-002",
+        "name": "Demo National Park",
+        "category": "NATIONAL_PARK",
+        "state": "Uttarakhand",
+        "district": "Nainital",
+        "source": "DEMO DATA \u2014 NOT OFFICIAL BOUNDARIES",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": true,
+        "metadata": {
+          "is_demo": true,
+          "designation": "Test / Demo National Park Boundary"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              78.7,
+              29.35
+            ],
+            [
+              79.2,
+              29.35
+            ],
+            [
+              79.2,
+              29.8
+            ],
+            [
+              78.7,
+              29.8
+            ],
+            [
+              78.7,
+              29.35
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "DEMO-PA-003",
+        "name": "Demo Protected Forest",
+        "category": "FOREST",
+        "state": "Maharashtra",
+        "district": "Mumbai Suburban",
+        "source": "DEMO DATA \u2014 NOT OFFICIAL BOUNDARIES",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": true,
+        "metadata": {
+          "is_demo": true,
+          "designation": "Test / Demo Protected Forest Reserve"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              72.8,
+              19.1
+            ],
+            [
+              73.0,
+              19.1
+            ],
+            [
+              73.0,
+              19.32
+            ],
+            [
+              72.8,
+              19.32
+            ],
+            [
+              72.8,
+              19.1
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "DEMO-PA-004",
+        "name": "Demo Eco-Sensitive Zone",
+        "category": "ECO_SENSITIVE_ZONE",
+        "state": "Rajasthan",
+        "district": "Bharatpur",
+        "source": "DEMO DATA \u2014 NOT OFFICIAL BOUNDARIES",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": true,
+        "metadata": {
+          "is_demo": true,
+          "designation": "Test / Demo Eco-Sensitive Buffer Zone"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              77.45,
+              27.1
+            ],
+            [
+              77.6,
+              27.1
+            ],
+            [
+              77.6,
+              27.25
+            ],
+            [
+              77.45,
+              27.25
+            ],
+            [
+              77.45,
+              27.1
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "DEMO-PA-005",
+        "name": "Demo Tiger Reserve",
+        "category": "TIGER_RESERVE",
+        "state": "Karnataka",
+        "district": "Chamarajanagar",
+        "source": "DEMO DATA \u2014 NOT OFFICIAL BOUNDARIES",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": true,
+        "metadata": {
+          "is_demo": true,
+          "designation": "Test / Demo Tiger Reserve Boundary"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              76.15,
+              11.55
+            ],
+            [
+              76.7,
+              11.55
+            ],
+            [
+              76.7,
+              12.0
+            ],
+            [
+              76.15,
+              12.0
+            ],
+            [
+              76.15,
+              11.55
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-006",
+        "name": "Chilika Lake Ramsar Wetland",
+        "category": "RAMSAR_WETLAND",
+        "state": "Odisha",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Ramsar Wetland of International Importance",
+          "established_year": 1981,
+          "area_sq_km": 1165.0,
+          "clearance_type_required": "State Wetland Authority & CRZ Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              85.1,
+              19.45
+            ],
+            [
+              85.6,
+              19.45
+            ],
+            [
+              85.6,
+              19.9
+            ],
+            [
+              85.1,
+              19.9
+            ],
+            [
+              85.1,
+              19.45
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "DEMO-PA-007",
+        "name": "Demo Restricted Zone",
+        "category": "OTHER_RESTRICTED_ZONE",
+        "state": "Gujarat",
+        "district": "Junagadh",
+        "source": "DEMO DATA \u2014 NOT OFFICIAL BOUNDARIES",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": true,
+        "metadata": {
+          "is_demo": true,
+          "designation": "Test / Demo Coastal Restricted Zone"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              70.45,
+              21.0
+            ],
+            [
+              71.2,
+              21.0
+            ],
+            [
+              71.2,
+              21.5
+            ],
+            [
+              70.45,
+              21.5
+            ],
+            [
+              70.45,
+              21.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-001",
+        "name": "Dudhwa Tiger Reserve & National Park",
+        "category": "TIGER_RESERVE",
+        "state": "Uttar Pradesh",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Protected Area / Tiger Reserve",
+          "established_year": 1977,
+          "area_sq_km": 490.3,
+          "clearance_type_required": "National Board for Wildlife (NBWL) Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.45,
+              28.3
+            ],
+            [
+              80.95,
+              28.3
+            ],
+            [
+              80.95,
+              28.65
+            ],
+            [
+              80.45,
+              28.65
+            ],
+            [
+              80.45,
+              28.3
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-002",
+        "name": "Jim Corbett National Park",
+        "category": "NATIONAL_PARK",
+        "state": "Uttarakhand",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "National Park & Tiger Reserve",
+          "established_year": 1936,
+          "area_sq_km": 520.8,
+          "clearance_type_required": "NBWL & Forest Advisory Committee Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              78.75,
+              29.4
+            ],
+            [
+              79.15,
+              29.4
+            ],
+            [
+              79.15,
+              29.75
+            ],
+            [
+              78.75,
+              29.75
+            ],
+            [
+              78.75,
+              29.4
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-003",
+        "name": "Sanjay Gandhi National Park & Aarey Eco-Zone",
+        "category": "ECO_SENSITIVE_ZONE",
+        "state": "Maharashtra",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Eco-Sensitive Zone / National Park",
+          "established_year": 1969,
+          "area_sq_km": 103.8,
+          "clearance_type_required": "State Forest Department & MOEFCC Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              72.82,
+              19.12
+            ],
+            [
+              72.98,
+              19.12
+            ],
+            [
+              72.98,
+              19.3
+            ],
+            [
+              72.82,
+              19.3
+            ],
+            [
+              72.82,
+              19.12
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-004",
+        "name": "Bandipur Tiger Reserve & National Park",
+        "category": "TIGER_RESERVE",
+        "state": "Karnataka",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Tiger Reserve & Biosphere Reserve",
+          "established_year": 1974,
+          "area_sq_km": 874.2,
+          "clearance_type_required": "NBWL Clearance & NTCA Approval"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              76.2,
+              11.6
+            ],
+            [
+              76.65,
+              11.6
+            ],
+            [
+              76.65,
+              11.95
+            ],
+            [
+              76.2,
+              11.95
+            ],
+            [
+              76.2,
+              11.6
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-005",
+        "name": "Keoladeo Ghana Wetland",
+        "category": "RAMSAR_WETLAND",
+        "state": "Rajasthan",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Ramsar Site / World Heritage Site",
+          "established_year": 1981,
+          "area_sq_km": 28.7,
+          "clearance_type_required": "Wetland Authority & Central Environmental Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              77.48,
+              27.13
+            ],
+            [
+              77.56,
+              27.13
+            ],
+            [
+              77.56,
+              27.22
+            ],
+            [
+              77.48,
+              27.22
+            ],
+            [
+              77.48,
+              27.13
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-007",
+        "name": "Gir Forest Wildlife Sanctuary",
+        "category": "WILDLIFE_SANCTUARY",
+        "state": "Gujarat",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Wildlife Sanctuary / Lion Habitat",
+          "established_year": 1965,
+          "area_sq_km": 1412.0,
+          "clearance_type_required": "NBWL & Chief Wildlife Warden Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              70.5,
+              21.05
+            ],
+            [
+              71.15,
+              21.05
+            ],
+            [
+              71.15,
+              21.45
+            ],
+            [
+              70.5,
+              21.45
+            ],
+            [
+              70.5,
+              21.05
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-008",
+        "name": "Kaziranga National Park",
+        "category": "NATIONAL_PARK",
+        "state": "Assam",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "World Heritage Site & Tiger Reserve",
+          "established_year": 1905,
+          "area_sq_km": 430.0,
+          "clearance_type_required": "NBWL & High-Level UNESCO Eco Committee Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              92.95,
+              26.5
+            ],
+            [
+              93.45,
+              26.5
+            ],
+            [
+              93.45,
+              26.78
+            ],
+            [
+              92.95,
+              26.78
+            ],
+            [
+              92.95,
+              26.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-009",
+        "name": "Sundarbans Biosphere & Tiger Reserve",
+        "category": "TIGER_RESERVE",
+        "state": "West Bengal",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Ramsar Site & UNESCO Heritage Tiger Reserve",
+          "established_year": 1984,
+          "area_sq_km": 1330.1,
+          "clearance_type_required": "CRZ, NBWL & Sundarban Biosphere Authority Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              88.5,
+              21.5
+            ],
+            [
+              89.15,
+              21.5
+            ],
+            [
+              89.15,
+              22.1
+            ],
+            [
+              88.5,
+              22.1
+            ],
+            [
+              88.5,
+              21.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-010",
+        "name": "Kaimur Wildlife Sanctuary",
+        "category": "WILDLIFE_SANCTUARY",
+        "state": "Bihar",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Wildlife Sanctuary & Forest Reserve",
+          "established_year": 1982,
+          "area_sq_km": 1342.0,
+          "clearance_type_required": "State Forest Advisory & Regional MoEFCC Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.4,
+              24.55
+            ],
+            [
+              84.1,
+              24.55
+            ],
+            [
+              84.1,
+              24.98
+            ],
+            [
+              83.4,
+              24.98
+            ],
+            [
+              83.4,
+              24.55
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-011",
+        "name": "Periyar Tiger Reserve & Sanctuary",
+        "category": "TIGER_RESERVE",
+        "state": "Kerala",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Tiger Reserve & Elephant Reserve",
+          "established_year": 1950,
+          "area_sq_km": 925.0,
+          "clearance_type_required": "NBWL & Western Ghats Ecology Panel Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              76.9,
+              9.2
+            ],
+            [
+              77.3,
+              9.2
+            ],
+            [
+              77.3,
+              9.6
+            ],
+            [
+              76.9,
+              9.6
+            ],
+            [
+              76.9,
+              9.2
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-012",
+        "name": "Western Ghats Eco-Sensitive Zone",
+        "category": "ECO_SENSITIVE_ZONE",
+        "state": "Karnataka",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Eco-Sensitive Corridor",
+          "established_year": 2012,
+          "area_sq_km": 2400.0,
+          "clearance_type_required": "MoEFCC High Level Working Group Approval"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              75.1,
+              13.1
+            ],
+            [
+              75.75,
+              13.1
+            ],
+            [
+              75.75,
+              13.8
+            ],
+            [
+              75.1,
+              13.8
+            ],
+            [
+              75.1,
+              13.1
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-013",
+        "name": "Dehradun Rajaji Reserved Forest Division",
+        "category": "FOREST",
+        "state": "Uttarakhand",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Reserved Forest / Corridor",
+          "established_year": 1983,
+          "area_sq_km": 820.0,
+          "clearance_type_required": "Forest Conservation Act (FCA) Stage I & II Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              77.9,
+              30.05
+            ],
+            [
+              78.35,
+              30.05
+            ],
+            [
+              78.35,
+              30.35
+            ],
+            [
+              77.9,
+              30.35
+            ],
+            [
+              77.9,
+              30.05
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "PA-IND-014",
+        "name": "Okhla Bird Sanctuary Eco-Sensitive Zone",
+        "category": "ECO_SENSITIVE_ZONE",
+        "state": "Uttar Pradesh",
+        "district": "Unspecified",
+        "source": "MoEFCC / WII Protected Areas Database",
+        "source_url": null,
+        "last_updated": "2026-09-10T12:00:00Z",
+        "is_demo": false,
+        "metadata": {
+          "designation": "Eco-Sensitive Zone / NCR Wetland",
+          "established_year": 1990,
+          "area_sq_km": 4.0,
+          "clearance_type_required": "State Wetland Authority & NBWL Clearance"
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              77.3,
+              28.52
+            ],
+            [
+              77.34,
+              28.52
+            ],
+            [
+              77.34,
+              28.57
+            ],
+            [
+              77.3,
+              28.57
+            ],
+            [
+              77.3,
+              28.52
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

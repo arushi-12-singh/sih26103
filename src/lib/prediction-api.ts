@@ -94,3 +94,60 @@ export async function findSimilarProjects(input: ProjectRiskInput, topK = 5): Pr
   }
   return response.json() as Promise<SimilarityResponse>;
 }
+
+// --- GIS & Environmental Boundary API ---
+
+export type GISBufferInput = {
+  project_id?: string;
+  latitude: number;
+  longitude: number;
+  buffer_distance_km: number;
+  zone_categories?: string[];
+};
+
+export type ZoneCollision = {
+  zone_id: string;
+  zone_name: string;
+  zone_category: string;
+  state: string;
+  designation: string;
+  clearance_type_required: string;
+  distance_to_boundary_km: number;
+  is_direct_intersection: boolean;
+  intersection_area_sq_km: number;
+  severity: "CRITICAL" | "HIGH" | "WARNING";
+};
+
+export type GISCollisionResponse = {
+  has_collision: boolean;
+  total_collisions: number;
+  highest_severity: "NONE" | "WARNING" | "HIGH" | "CRITICAL";
+  clearance_required: boolean;
+  buffer_distance_km: number;
+  project_coordinates: { latitude: number; longitude: number };
+  collisions: ZoneCollision[];
+  geojson_layers: any;
+  summary: string;
+};
+
+export async function checkGisCollision(input: GISBufferInput): Promise<GISCollisionResponse> {
+  const response = await fetch(`${API_URL}/api/v1/gis/check-collision`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(error?.detail?.[0]?.msg ?? error?.detail ?? `GIS collision check failed (${response.status})`);
+  }
+  return response.json() as Promise<GISCollisionResponse>;
+}
+
+export async function fetchProtectedZones(categories?: string[]): Promise<any> {
+  const params = categories?.length ? `?${categories.map(c => `category=${encodeURIComponent(c)}`).join("&")}` : "";
+  const response = await fetch(`${API_URL}/api/v1/gis/protected-zones${params}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch protected zones (${response.status})`);
+  }
+  return response.json();
+}
