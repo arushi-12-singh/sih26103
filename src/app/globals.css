@@ -22,6 +22,23 @@ body {
 button, input { font: inherit; }
 ::selection { background: #cbd9d1; color: #173027; }
 
+.login-shell { min-height: 100vh; display: grid; place-items: center; background: #202724; padding: 24px; }
+.login-panel { width: min(100%, 430px); background: #f8f9f7; border: 1px solid #39423d; padding: 42px; box-shadow: 0 18px 50px #10161266; }
+.login-brand { display: flex; align-items: center; gap: 8px; color: #202724; font-size: 15px; font-weight: 700; letter-spacing: .12em; }
+.login-brand small { color: #77857d; font-size: 8px; letter-spacing: .12em; align-self: flex-end; margin: 0 0 2px -3px; }
+.login-heading { margin: 52px 0 32px; }
+.login-heading h1 { color: #1c211f; font-size: 30px; letter-spacing: -.04em; font-weight: 600; margin: 13px 0 10px; }
+.login-heading p, .login-note { color: #77827a; font-size: 12px; line-height: 1.6; margin: 0; }
+.login-panel form { display: grid; gap: 20px; }
+.login-panel label > span { display: block; color: #56635b; font-size: 10px; font-weight: 700; letter-spacing: .08em; margin-bottom: 8px; text-transform: uppercase; }
+.login-input { display: flex; align-items: center; gap: 9px; border: 1px solid #d5ded6; background: white; color: #77857d; padding: 11px 12px; }
+.login-input:focus-within { border-color: #74967c; }
+.login-input input { border: 0; outline: 0; background: transparent; color: #1c211f; width: 100%; font: inherit; font-size: 12px; }
+.login-submit { border: 0; background: #27352e; color: white; cursor: pointer; font-size: 11px; padding: 12px 14px; margin-top: 5px; }
+.login-submit:hover { background: #35413b; }
+.login-error { display: flex; align-items: center; gap: 8px; color: #a34f3b; background: #f7e9e4; border: 1px solid #e6c7bd; padding: 10px 12px; font-size: 11px; }
+.login-note { border-top: 1px solid #e0e5e0; margin-top: 28px; padding-top: 18px; }
+
 .app-shell { min-height: 100vh; display: flex; background: #f4f5f3; color: #1c211f; }
 .sidebar { width: 236px; flex: 0 0 236px; background: #202724; color: #dfe6e1; padding: 27px 15px 18px; display: flex; flex-direction: column; }
 .brand { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; letter-spacing: .12em; padding: 0 11px 37px; }.brand small { color: #8c9a91; font-size: 8px; letter-spacing: .12em; align-self: flex-end; margin: 0 0 2px -3px; }.brand-mark { height: 28px; width: 28px; border: 1px solid #829b8f; color: #a7c5b5; display: grid; place-items: center; border-radius: 7px; }
@@ -722,4 +739,44 @@ button, input { font: inherit; }
   .doc-form-row { grid-template-columns: 1fr; }
   .doc-table-head, .doc-table-row { grid-template-columns: 1.5fr 1fr 60px; }
   .doc-cell-size, .doc-cell-date { display: none; }
+}
+
+/* Recovered portfolio styles from 824e82e */
+.portfolio-wrap { max-width: 1450px; }
+.portfolio-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 22px; }
+.portfolio-search { display: flex; align-items: center; gap: 8px; background: #fbfcfa; border: 1px solid #dfe5df; padding: 10px 12px; min-width: 300px; }
+.portfolio-search input { border: 0; outline: 0; background: transparent; width: 100%; font-size: 11px; }
+.portfolio-search button { border: 0; background: none; color: #829088; cursor: pointer; }
+.portfolio-toolbar label { position: relative; display: flex; align-items: center; gap: 8px; border: 1px solid #dfe5df; background: #fbfcfa; padding: 7px 10px; color: #87928b; font-size: 10px; }
+.portfolio-toolbar label span { display: none; }
+.portfolio-toolbar select { appearance: none; border: 0; outline: 0; background: transparent; padding-right: 14px; color: #53645a; font-size: 11px; }
+.portfolio-list { padding: 0 22px; }
+.portfolio-list-header { display: flex; justify-content: space-between; padding: 18px 0 12px; border-bottom: 1px solid #dfe5df; color: #53645a; font-size: 11px; }
+.portfolio-list-header span { color: #929d95; font-size: 10px; }
+.portfolio-row { width: 100%; display: grid; grid-template-columns: 100px 1.2fr 1.5fr 1.1fr 20px; gap: 15px; align-items: center; text-align: left; min-height: 70px; border: 0; border-bottom: 1px solid #e2e8e2; background: transparent; color: #53645a; cursor: pointer; }
+.portfolio-row:hover, .portfolio-row:focus-visible { background: #f4f8f3; outline: none; }
+.portfolio-row small { display: block; color: #919c95; font-size: 8px; margin-bottom: 4px; }
+.portfolio-row strong { display: block; font-size: 11px; font-weight: 600; }
+.portfolio-row b { font-size: 10px; font-weight: 500; }
+.portfolio-id { color: #548665; font-size: 11px; font-weight: 600; }
+.portfolio-row svg { color: #8e9d93; }
+.portfolio-empty { padding: 28px 0; text-align: center; color: #89958e; font-size: 11px; }
+.search-result-link { position: absolute; top: 48px; left: 0; right: 0; border: 1px solid #dbe2dc; background: white; color: #47745d; padding: 10px; text-align: left; font-size: 10px; cursor: pointer; }
+.state-panel { position: fixed; z-index: 10; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(520px, calc(100% - 32px)); padding: 24px; background: #fbfcfa; border: 1px solid #d4dfd5; box-shadow: 0 15px 40px #18302722; color: #53645a; }
+.state-panel:before { content: ""; position: fixed; z-index: -1; inset: -100vh; background: #18302718; }
+.state-panel h3 { color: #2e4837; font-size: 20px; margin: 12px 0 6px; }
+.state-panel p { color: #718078; font-size: 12px; line-height: 1.6; }
+.state-panel small { display: block; color: #8a968e; font-size: 10px; margin-top: 18px; }
+.state-close { position: absolute; right: 15px; top: 15px; border: 0; background: none; color: #718078; cursor: pointer; }
+.state-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; border-top: 1px solid #dfe7df; padding-top: 16px; }
+.state-grid span { color: #8a968e; font-size: 8px; letter-spacing: .1em; }
+.state-grid b { display: block; color: #53645a; font-size: 11px; letter-spacing: 0; margin-top: 5px; }
+.state-page-panel { max-width: 560px; margin-top: 30px; }
+
+@media (max-width: 700px) {
+  .portfolio-toolbar { align-items: stretch; flex-direction: column; }
+  .portfolio-search { min-width: 0; }
+  .portfolio-row { grid-template-columns: 1fr 1fr 20px; gap: 10px; padding: 12px 0; }
+  .portfolio-row > span:nth-child(3), .portfolio-row > span:nth-child(4) { grid-column: span 2; }
+  .portfolio-list { padding: 0 14px; }
 }
