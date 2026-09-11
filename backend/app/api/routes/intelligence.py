@@ -123,9 +123,14 @@ def project_intelligence(request: Request, payload: ProjectIntelligenceRequest) 
         similar_projects=similar_projects,
         historical_evidence=historical_evidence,
         historical_summary=historical_summary,
+<<<<<<< HEAD
         gis_screening=gis_signal,
         priority=priority_result,
         interventions=interventions,
+=======
+        prediction=prediction_result,
+        similarity=similarity_result,
+>>>>>>> arushi/main
     )
 
 

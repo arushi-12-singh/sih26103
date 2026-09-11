@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "amber_days_remaining": 30,
+    "critical_risk_percentage": 80
+  },
+  "projects": {
+    "EFC-04": {
+      "milestone": "Configured demonstration milestone",
+      "deadline": "2026-10-15"
+    },
+    "PAI-00001": {
+      "milestone": "Configured demonstration milestone",
+      "deadline": "2026-12-31"
+    }
+  }
+}

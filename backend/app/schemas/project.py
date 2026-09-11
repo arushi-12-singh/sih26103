@@ -30,6 +30,12 @@ class ProjectRiskRequest(BaseModel):
         return self
 
 
+class ProjectRecord(ProjectRiskRequest):
+    """A stored project record suitable for selecting a prediction input."""
+
+    project_id: str = Field(min_length=1, max_length=100)
+
+
 class ProjectRiskResponse(BaseModel):
     project_risk: "ProjectRiskSummary"
     top_risk_factors: list["RiskFactor"]
