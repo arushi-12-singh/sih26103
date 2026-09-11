@@ -394,6 +394,15 @@ Example response (verified live output):
 
 `GREEN` is healthy, `AMBER` is approaching the configured deadline, `RED` is breached, and `CRITICAL` is a breach with a high saved-model risk score. With `MSG91_ENABLED=false`, breach alerts are recorded as `dry_run` and no provider request is made. MSG91 credentials are never returned by an API.
 
+### SLA alert endpoints
+
+- `GET /api/v1/projects/{project_id}/sla` evaluates configured SLA status and applies duplicate-protected notification rules.
+- `POST /api/v1/projects/{project_id}/sla/evaluate` evaluates the same workflow explicitly.
+- `POST /api/v1/projects/{project_id}/sla/test-alert` is a controlled demo trigger; its recipient always comes from backend configuration.
+- `GET /api/v1/projects/{project_id}/sla/audit` returns masked notification audit events.
+
+`GREEN` is healthy, `AMBER` is approaching the configured deadline, `RED` is breached, and `CRITICAL` is a breach with a high saved-model risk score. With `MSG91_ENABLED=false`, breach alerts are recorded as `dry_run` and no provider request is made. MSG91 credentials are never returned by an API.
+
 ## Architecture
 
 - `app/main.py`: application, CORS, lifecycle model loading (all services loaded once at startup), health endpoint
