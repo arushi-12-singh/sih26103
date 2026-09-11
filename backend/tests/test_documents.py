@@ -51,6 +51,29 @@ def test_valid_pdf_upload(client: TestClient):
     assert "document_id" in res
 
 
+def test_upload_attaches_document_to_existing_project_without_creating_project(client: TestClient):
+    project_id = "PAI-00001"
+    before = client.get(f"/api/v1/projects/{project_id}")
+    assert before.status_code == 200
+    before_project = before.json()
+
+    response = client.post(
+        f"/api/v1/projects/{project_id}/documents",
+        files={"file": ("project-record.pdf", io.BytesIO(b"%PDF-1.5 Project record"), "application/pdf")},
+    )
+    assert response.status_code == 201
+    uploaded = response.json()
+    assert uploaded["project_id"] == project_id
+
+    after = client.get(f"/api/v1/projects/{project_id}")
+    assert after.status_code == 200
+    assert after.json() == before_project
+
+    documents = client.get(f"/api/v1/projects/{project_id}/documents")
+    assert documents.status_code == 200
+    assert documents.json()["documents"][0]["project_id"] == project_id
+
+
 def test_valid_docx_upload(client: TestClient):
     project_id = "TEST-PROJ-01"
     content = b"PK\x03\x04\x14\x00\x06\x00DOCX Mock Content"

@@ -6,6 +6,12 @@ from app.schemas.project import ProjectRiskResponse, ProjectRiskSummary, RiskFac
 from app.schemas.similarity import SimilarityResponse
 
 
+class ProjectReferenceRequest(BaseModel):
+    """Request shape used when all prediction inputs come from the project dataset."""
+
+    project_id: str = Field(min_length=1, max_length=100)
+
+
 class IntelligenceSimilarProject(BaseModel):
     """A single historical project match in the intelligence response."""
 
@@ -40,3 +46,9 @@ class ProjectIntelligenceResponse(BaseModel):
     # Retain the original nested contract while exposing the newer flat fields.
     prediction: ProjectRiskResponse
     similarity: SimilarityResponse
+
+
+class ProjectAnalysisResponse(ProjectIntelligenceResponse):
+    """Project-specific intelligence response with the resolved project ID."""
+
+    project_id: str

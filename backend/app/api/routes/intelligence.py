@@ -5,10 +5,13 @@ from fastapi import APIRouter, HTTPException, Request, status
 from app.schemas.intelligence import (
     IntelligenceHistoricalEvidence,
     IntelligenceSimilarProject,
+    ProjectAnalysisResponse,
+    ProjectReferenceRequest,
     ProjectIntelligenceResponse,
 )
 from app.schemas.project import ProjectRiskRequest
 from app.services.prediction_service import SavedPredictionService
+from app.services.project_service import ProjectService
 from app.services.similarity_service import SimilarityService
 
 router = APIRouter(tags=["intelligence"])
@@ -25,13 +28,33 @@ router = APIRouter(tags=["intelligence"])
         "and SimilarityService directly -- no internal HTTP requests."
     ),
 )
-def project_intelligence(request: Request, payload: ProjectRiskRequest) -> ProjectIntelligenceResponse:
+def project_intelligence(
+    request: Request,
+    payload: ProjectRiskRequest | ProjectReferenceRequest,
+) -> ProjectIntelligenceResponse:
     """Run risk prediction and historical similarity search in a single call.
 
     Reuses PredictionService and SimilarityService directly — no internal HTTP
     requests.  The input is validated once by Pydantic and both services receive
     the same consistent feature dict.
     """
+    resolved_payload = _resolve_payload(request, payload)
+    return _run_project_intelligence(request, resolved_payload)
+
+
+@router.post(
+    "/projects/{project_id}/ai-analysis",
+    response_model=ProjectAnalysisResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Run AI analysis for a stored project",
+)
+def project_ai_analysis(request: Request, project_id: str) -> ProjectAnalysisResponse:
+    project = _get_project(request, project_id)
+    result = _run_project_intelligence(request, project)
+    return ProjectAnalysisResponse(project_id=project.project_id, **result.model_dump())
+
+
+def _run_project_intelligence(request: Request, payload: ProjectRiskRequest) -> ProjectIntelligenceResponse:
     prediction_svc: SavedPredictionService | None = getattr(request.app.state, "prediction_service", None)
     similarity_svc: SimilarityService | None = getattr(request.app.state, "similarity_service", None)
 
@@ -46,6 +69,8 @@ def project_intelligence(request: Request, payload: ProjectRiskRequest) -> Proje
             prediction_result = prediction_svc.predict(payload)
         except (ValueError, RuntimeError) as exc:
             errors.append(f"Prediction failed: {exc}")
+        except Exception as exc:
+            errors.append(f"Prediction failed unexpectedly: {exc}")
     else:
         errors.append("Prediction model is unavailable")
 
@@ -56,6 +81,8 @@ def project_intelligence(request: Request, payload: ProjectRiskRequest) -> Proje
             similarity_result = similarity_svc.find_similar(payload)
         except (ValueError, RuntimeError) as exc:
             errors.append(f"Similarity search failed: {exc}")
+        except Exception as exc:
+            errors.append(f"Similarity search failed unexpectedly: {exc}")
     else:
         errors.append("Similarity model is unavailable")
 
@@ -77,6 +104,26 @@ def project_intelligence(request: Request, payload: ProjectRiskRequest) -> Proje
         prediction=prediction_result,
         similarity=similarity_result,
     )
+
+
+def _resolve_payload(
+    request: Request,
+    payload: ProjectRiskRequest | ProjectReferenceRequest,
+) -> ProjectRiskRequest:
+    if not payload.project_id:
+        return payload
+    return _get_project(request, payload.project_id)
+
+
+def _get_project(request: Request, project_id: str):
+    project_service: ProjectService | None = getattr(request.app.state, "project_service", None)
+    if project_service is None:
+        detail = getattr(request.app.state, "project_error", None) or "Project data is unavailable"
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=detail)
+    project = project_service.get_project(project_id)
+    if project is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+    return project
 
 
 def _build_similar_projects(similarity_result) -> list[IntelligenceSimilarProject]:  # noqa: ANN001

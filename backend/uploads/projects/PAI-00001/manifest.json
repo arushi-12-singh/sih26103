@@ -1,0 +1,28 @@
+[
+  {
+    "document_id": "DOC-D04ADDC9DA",
+    "project_id": "PAI-00001",
+    "filename": "project-record.pdf",
+    "file_type": "application/pdf",
+    "file_size": 23,
+    "uploaded_at": "2026-09-11T12:39:04.992721+00:00",
+    "uploaded_by": "Ananya Sharma",
+    "status": "uploaded",
+    "stored_filename": "DOC-D04ADDC9DA_project-record.pdf",
+    "category": "Other / Supporting Document",
+    "description": null
+  },
+  {
+    "document_id": "DOC-C654D33D83",
+    "project_id": "PAI-00001",
+    "filename": "Polavaram_Irrigation_Project_Yearwise_Dossier_SIH26103.pdf",
+    "file_type": "application/pdf",
+    "file_size": 113894,
+    "uploaded_at": "2026-09-11T12:22:57.407260+00:00",
+    "uploaded_by": "Ananya Sharma",
+    "status": "uploaded",
+    "stored_filename": "DOC-C654D33D83_Polavaram_Irrigation_Project_Yearwise_Dossier_SIH26103.pdf",
+    "category": "Detailed Project Report (DPR)",
+    "description": null
+  }
+]

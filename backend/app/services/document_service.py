@@ -22,6 +22,7 @@ from app.schemas.document import (
     DocumentMetadata,
     DocumentUploadResponse,
 )
+from app.services.project_service import ProjectService
 from app.services.project_validator import is_valid_project_format, validate_project_exists
 
 
@@ -43,11 +44,13 @@ class DocumentService:
         base_dir: Path = DEFAULT_UPLOAD_DIR,
         extra_valid_projects: set[str] | None = None,
         max_size_bytes: int | None = None,
+        project_service: ProjectService | None = None,
     ) -> None:
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
         self.extra_valid_projects = extra_valid_projects or set()
         self.max_size_bytes = max_size_bytes or MAX_DOCUMENT_SIZE_BYTES
+        self.project_service = project_service
 
     def _validate_project(self, project_id: str) -> str:
         """Validate project ID format and existence."""
@@ -57,7 +60,18 @@ class DocumentService:
                 detail=f"Invalid project ID format: '{project_id}'",
             )
         clean_pid = project_id.strip()
-        if not validate_project_exists(clean_pid, self.extra_valid_projects):
+        project_exists = (
+            clean_pid in self.extra_valid_projects
+            or (
+                self.project_service is not None
+                and self.project_service.get_project(clean_pid) is not None
+            )
+            or (
+                self.project_service is None
+                and validate_project_exists(clean_pid)
+            )
+        )
+        if not project_exists:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Project '{clean_pid}' does not exist",
@@ -293,5 +307,5 @@ class DocumentService:
         )
 
 
-def build_document_service() -> DocumentService:
-    return DocumentService()
+def build_document_service(project_service: ProjectService | None = None) -> DocumentService:
+    return DocumentService(project_service=project_service)

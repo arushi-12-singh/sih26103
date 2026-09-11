@@ -53,13 +53,18 @@ async def upload_document(
     uploader: Optional[str] = Form(default="Ananya Sharma", description="Uploader persona / username"),
 ) -> DocumentUploadResponse:
     service = get_document_service(request)
-    return await service.save_document(
-        project_id=project_id,
-        file=file,
-        category=category,
-        description=description,
-        uploader=uploader or "Ananya Sharma",
-    )
+    try:
+        return await service.save_document(
+            project_id=project_id,
+            file=file,
+            category=category,
+            description=description,
+            uploader=uploader or "Ananya Sharma",
+        )
+    except HTTPException:
+        raise
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=500, detail=f"Document upload failed: {exc}") from exc
 
 
 @router.get(
@@ -71,7 +76,12 @@ async def upload_document(
 )
 def list_documents(project_id: str, request: Request) -> DocumentListResponse:
     service = get_document_service(request)
-    return service.list_documents(project_id=project_id)
+    try:
+        return service.list_documents(project_id=project_id)
+    except HTTPException:
+        raise
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=500, detail=f"Document listing failed: {exc}") from exc
 
 
 @router.get(
@@ -85,7 +95,12 @@ def download_document(
     request: Request,
 ) -> FileResponse:
     service = get_document_service(request)
-    file_path, meta = service.get_document_file(project_id, document_id)
+    try:
+        file_path, meta = service.get_document_file(project_id, document_id)
+    except HTTPException:
+        raise
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=500, detail=f"Document download failed: {exc}") from exc
 
     # Encode filename for Content-Disposition header
     encoded_name = quote(meta.filename)
@@ -113,7 +128,12 @@ def delete_document(
     request: Request,
 ) -> dict[str, str]:
     service = get_document_service(request)
-    return service.delete_document(project_id=project_id, document_id=document_id)
+    try:
+        return service.delete_document(project_id=project_id, document_id=document_id)
+    except HTTPException:
+        raise
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=500, detail=f"Document deletion failed: {exc}") from exc
 
 
 @router.patch(
@@ -130,9 +150,14 @@ def update_document(
     request: Request,
 ) -> DocumentMetadata:
     service = get_document_service(request)
-    return service.update_document(
-        project_id=project_id,
-        document_id=document_id,
-        category=payload.category,
-        description=payload.description,
-    )
+    try:
+        return service.update_document(
+            project_id=project_id,
+            document_id=document_id,
+            category=payload.category,
+            description=payload.description,
+        )
+    except HTTPException:
+        raise
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=500, detail=f"Document metadata update failed: {exc}") from exc
