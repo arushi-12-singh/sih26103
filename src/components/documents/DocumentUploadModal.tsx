@@ -24,6 +24,7 @@ import {
   fetchProjectDocuments,
   getDocumentDownloadUrl,
   uploadProjectDocument,
+  updateProjectDocument,
 } from "@/lib/prediction-api";
 
 interface DocumentUploadModalProps {
@@ -315,6 +316,25 @@ export default function DocumentUploadModal({
     }
   };
 
+  const handleEditDocument = async (doc: DocumentMetadata) => {
+    const category = window.prompt("Document category", doc.category ?? CATEGORIES[CATEGORIES.length - 1]);
+    if (category === null) return;
+    const description = window.prompt("Document description", doc.description ?? "");
+    if (description === null) return;
+    try {
+      const updated = await updateProjectDocument(projectId, doc.document_id, {
+        category: CATEGORIES.includes(category as DocumentCategory)
+          ? category as DocumentCategory
+          : "Other / Supporting Document",
+        description,
+      });
+      setDocuments((previous) => previous.map((item) => item.document_id === updated.document_id ? updated : item));
+      setGeneralMessage({ type: "success", text: `Document "${doc.filename}" updated successfully.` });
+    } catch (err) {
+      setGeneralMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to update document." });
+    }
+  };
+
   const waitingCount = fileQueue.filter(
     (i) => i.status === "Waiting" || i.status === "Failed"
   ).length;
@@ -572,7 +592,7 @@ export default function DocumentUploadModal({
                 {documents.length}{" "}
                 {documents.length === 1 ? "document" : "documents"} (
                 {formatBytes(
-                  documents.reduce((acc, d) => acc + d.file_size_bytes, 0)
+                  documents.reduce((acc, d) => acc + d.file_size, 0)
                 )}
                 )
               </span>
@@ -622,12 +642,12 @@ export default function DocumentUploadModal({
 
                       <div className="doc-cell-category">
                         <span className="doc-category-pill">
-                          {doc.category ?? doc.mime_type}
+                          {doc.category ?? doc.file_type}
                         </span>
                       </div>
 
                       <div className="doc-cell-size">
-                        {formatBytes(doc.file_size_bytes)}
+                        {formatBytes(doc.file_size)}
                       </div>
 
                       <div className="doc-cell-date">
@@ -641,7 +661,7 @@ export default function DocumentUploadModal({
                             }
                           )}
                         </span>
-                        <small>{doc.uploader}</small>
+                        <small>{doc.uploaded_by}</small>
                       </div>
 
                       <div className="doc-cell-actions">
@@ -658,6 +678,15 @@ export default function DocumentUploadModal({
                         >
                           <Download size={14} />
                         </a>
+                        <button
+                          type="button"
+                          className="doc-action-btn"
+                          onClick={() => handleEditDocument(doc)}
+                          title="Edit document metadata"
+                          aria-label={`Edit ${doc.filename}`}
+                        >
+                          <FileText size={14} />
+                        </button>
                         <button
                           type="button"
                           className="doc-action-btn danger"

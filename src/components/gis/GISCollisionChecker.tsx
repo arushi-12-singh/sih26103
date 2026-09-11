@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { AlertTriangle, Check, Compass, Layers, MapPin, RefreshCw, ShieldAlert, ShieldCheck, Sliders, Zap } from "lucide-react";
-import { checkGisCollision, type GISCollisionResponse, type ZoneCollision } from "@/lib/prediction-api";
+import { AlertTriangle, Compass, Layers, MapPin, RefreshCw, ShieldAlert, ShieldCheck, Sliders, Zap } from "lucide-react";
+import { checkGisCollision, type GISCollisionResponse } from "@/lib/prediction-api";
 
 // Dynamically import GISMap to prevent SSR window issues with Leaflet
 const GISMap = dynamic(() => import("./GISMap"), { ssr: false });

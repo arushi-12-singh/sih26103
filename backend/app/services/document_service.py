@@ -264,6 +264,34 @@ class DocumentService:
         self._write_manifest(project_dir, new_manifest)
         return {"status": "success", "message": f"Document '{document_id}' deleted successfully"}
 
+    def update_document(
+        self,
+        project_id: str,
+        document_id: str,
+        category: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> DocumentMetadata:
+        clean_project_id = self._validate_project(project_id)
+        project_dir = self._get_project_dir(clean_project_id)
+        manifest = self._read_manifest(project_dir)
+
+        for index, item in enumerate(manifest):
+            if item.get("document_id") != document_id:
+                continue
+            meta = DocumentMetadata(**item)
+            if category is not None:
+                meta.category = category.strip() or "Other / Supporting Document"
+            if description is not None:
+                meta.description = description.strip() or None
+            manifest[index] = meta.model_dump()
+            self._write_manifest(project_dir, manifest)
+            return meta
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Document '{document_id}' not found for project '{clean_project_id}'",
+        )
+
 
 def build_document_service() -> DocumentService:
     return DocumentService()

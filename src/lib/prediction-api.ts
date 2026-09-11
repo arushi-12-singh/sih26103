@@ -175,8 +175,8 @@ export async function checkGisCollision(input: GISBufferInput): Promise<GISColli
 }
 
 export type DocumentCategory = "Detailed Project Report (DPR)" | "Environmental Clearance" | "Land Acquisition Record" | "Financial & Expenditure Report" | "Site Survey & Geotechnical" | "Contract & Tender Agreement" | "Other / Supporting Document";
-export type DocumentMetadata = { document_id: string; project_id: string; filename: string; original_filename: string; category: DocumentCategory; description: string | null; file_size_bytes: number; mime_type: string; uploaded_at: string; uploader: string };
-export type DocumentUploadResponse = { success: boolean; message: string; document: DocumentMetadata };
+export type DocumentMetadata = { document_id: string; project_id: string; filename: string; file_type: string; file_size: number; uploaded_at: string; uploaded_by: string; status: string; stored_filename: string; category: DocumentCategory | null; description: string | null };
+export type DocumentUploadResponse = { document_id: string; project_id: string; filename: string; file_type: string; file_size: number; uploaded_at: string; uploaded_by: string; status: string; message: string };
 export type DocumentListResponse = { project_id: string; total_count: number; total_size_bytes: number; documents: DocumentMetadata[] };
 
 export async function fetchProjectDocuments(projectId: string): Promise<DocumentListResponse> {
@@ -194,6 +194,11 @@ export async function deleteProjectDocument(projectId: string, documentId: strin
   const response = await fetch(`${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}`, { method: "DELETE" });
   if (!response.ok) throw new Error(`Failed to delete document (${response.status})`);
   return response.json();
+}
+export async function updateProjectDocument(projectId: string, documentId: string, update: { category?: DocumentCategory; description?: string }): Promise<DocumentMetadata> {
+  const response = await fetch(`${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(update) });
+  if (!response.ok) throw new Error(`Failed to update document (${response.status})`);
+  return response.json() as Promise<DocumentMetadata>;
 }
 export function getDocumentDownloadUrl(projectId: string, documentId: string): string {
   return `${API_URL}/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}/download`;

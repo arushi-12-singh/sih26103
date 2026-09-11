@@ -30,6 +30,11 @@ class DocumentUploadResponse(BaseModel):
     message: Optional[str] = Field(default="Document uploaded successfully")
 
 
+class DocumentUpdateRequest(BaseModel):
+    category: Optional[str] = None
+    description: Optional[str] = None
+
+
 class DocumentListResponse(BaseModel):
     project_id: str
     total_count: int

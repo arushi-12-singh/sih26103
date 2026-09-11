@@ -16,6 +16,8 @@ from fastapi.responses import FileResponse
 
 from app.schemas.document import (
     DocumentListResponse,
+    DocumentMetadata,
+    DocumentUpdateRequest,
     DocumentUploadResponse,
 )
 from app.services.document_service import DocumentService, build_document_service
@@ -112,3 +114,25 @@ def delete_document(
 ) -> dict[str, str]:
     service = get_document_service(request)
     return service.delete_document(project_id=project_id, document_id=document_id)
+
+
+@router.patch(
+    "/{project_id}/documents/{document_id}",
+    response_model=DocumentMetadata,
+    status_code=status.HTTP_200_OK,
+    summary="Update project document metadata",
+    description="Updates the category and description of a cataloged project document.",
+)
+def update_document(
+    project_id: str,
+    document_id: str,
+    payload: DocumentUpdateRequest,
+    request: Request,
+) -> DocumentMetadata:
+    service = get_document_service(request)
+    return service.update_document(
+        project_id=project_id,
+        document_id=document_id,
+        category=payload.category,
+        description=payload.description,
+    )
